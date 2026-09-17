@@ -16,6 +16,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
@@ -64,12 +65,14 @@ STATUS_SENSORS: tuple[StatusBinarySensorEntityDescription, ...] = (
         name="Low Battery",
         status_value="low_battery",
         device_class=BinarySensorDeviceClass.BATTERY,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     StatusBinarySensorEntityDescription(
         key="charging",
         name="Charging",
         status_value="charging",
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
@@ -165,6 +168,7 @@ class CatPrinterConnectionBinarySensor(_DeviceStateBinarySensor):
     """Whether a BLE connection to the printer is currently open."""
 
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:bluetooth-connect"
     _attr_name = "Connection"
     _key = "connection"
