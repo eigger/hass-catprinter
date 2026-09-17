@@ -1,0 +1,10 @@
+{
+  "services": {
+    "print": {
+      "service": "mdi:printer-wireless"
+    },
+    "feed": {
+      "service": "mdi:paper-roll"
+    }
+  }
+}

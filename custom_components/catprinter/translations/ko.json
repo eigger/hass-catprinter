@@ -1,0 +1,133 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "설정할 프린터를 선택하세요.",
+        "data": {
+          "address": "장치",
+          "scan_interval": "폴링 주기",
+          "keep_connection": "BLE 연결 유지"
+        },
+        "data_description": {
+          "scan_interval": "배터리와 상태를 읽는 주기입니다. 폴링할 때마다 BLE 연결을 열며, ESP32 블루투스 프록시는 동시 연결이 3개뿐입니다.",
+          "keep_connection": "작업 사이에도 BLE 연결을 유지합니다. 프록시 연결 슬롯을 계속 점유하는 대신 첫 인쇄가 빨라집니다. 자주 인쇄하지 않으면 꺼두세요."
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "{name} 을(를) 설정하시겠습니까?",
+        "data": {
+          "scan_interval": "폴링 주기",
+          "keep_connection": "BLE 연결 유지"
+        },
+        "data_description": {
+          "scan_interval": "배터리와 상태를 읽는 주기입니다. 폴링할 때마다 BLE 연결을 열며, ESP32 블루투스 프록시는 동시 연결이 3개뿐입니다.",
+          "keep_connection": "작업 사이에도 BLE 연결을 유지합니다. 프록시 연결 슬롯을 계속 점유하는 대신 첫 인쇄가 빨라집니다. 자주 인쇄하지 않으면 꺼두세요."
+        }
+      },
+      "manual": {
+        "title": "수동으로 프린터 추가",
+        "description": "블루투스 이름으로 인식된 프린터가 없습니다(다른 기기 {count}개가 보임). 기기를 고르고 모델을 직접 지정하세요 — 이 프린터들은 펌웨어 버전만 알려주고 모델은 알려주지 않으므로, 광고 이름이 맞지 않으면 속도·발열 설정을 정할 수 없습니다.",
+        "data": {
+          "address": "기기",
+          "model": "프린터 모델",
+          "scan_interval": "폴링 주기",
+          "keep_connection": "BLE 연결 유지"
+        },
+        "data_description": {
+          "address": "보이는 블루투스 기기에서 고르거나, 목록에 없으면 주소를 직접 입력하세요(예: AA:BB:CC:DD:EE:FF).",
+          "model": "가장 가까운 모델을 고르세요. 접미 대소문자(X6h / X6H)는 발열 설정이 다른 별개 모델입니다.",
+          "scan_interval": "배터리와 상태를 읽는 주기입니다. 폴링할 때마다 BLE 연결을 열며, ESP32 블루투스 프록시는 동시 연결이 3개뿐입니다.",
+          "keep_connection": "작업 사이에도 BLE 연결을 유지합니다. 프록시 연결 슬롯을 계속 점유하는 대신 첫 인쇄가 빨라집니다. 자주 인쇄하지 않으면 꺼두세요."
+        }
+      }
+    },
+    "abort": {
+      "already_in_progress": "이미 설정이 진행 중입니다",
+      "already_configured": "이미 등록된 장치입니다",
+      "not_supported": "지원하는 캣 프린터로 보이지 않습니다.",
+      "unsupported_model": "이 모델은 모델별 비밀키(또는 별도 흐름 제어)가 필요해 이 통합에서는 지원하지 않습니다.",
+      "cannot_connect": "연결하지 못했습니다",
+      "unknown": "알 수 없는 오류"
+    },
+    "error": {
+      "invalid_address": "올바른 블루투스 주소가 아닙니다."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "폴링 주기",
+          "keep_connection": "BLE 연결 유지",
+          "interval_ms": "패킷 간격 (0 = 기기 기본값)",
+          "packet_size_cap": "최대 패킷 크기"
+        },
+        "data_description": {
+          "scan_interval": "배터리와 상태를 읽는 주기입니다. 폴링할 때마다 BLE 연결을 열며, ESP32 블루투스 프록시는 동시 연결이 3개뿐입니다.",
+          "keep_connection": "작업 사이에도 BLE 연결을 유지합니다. 프록시 연결 슬롯을 계속 점유하는 대신 첫 인쇄가 빨라집니다. 자주 인쇄하지 않으면 꺼두세요.",
+          "interval_ms": "BLE 패킷 사이 대기 시간입니다. 0이면 모델 프로파일 값(대부분 2~6 ms)을 씁니다. 인쇄에 빈 줄이 생기면 올리세요.",
+          "packet_size_cap": "프린터 MTU와 무관한 패킷 크기 상한입니다. 큰 쓰기를 떨어뜨리는 블루투스 프록시에서는 낮추세요."
+        }
+      }
+    }
+  },
+  "services": {
+    "print": {
+      "name": "인쇄",
+      "description": "페이로드를 렌더링해 인쇄합니다.",
+      "fields": {
+        "payload": {
+          "name": "페이로드",
+          "description": "그릴 내용을 기술한 페이로드(imagespec 형식)."
+        },
+        "height": {
+          "name": "높이",
+          "description": "캔버스 높이(픽셀). 너비는 헤드 폭(2\" 모델 384px)으로 고정됩니다."
+        },
+        "rotate": {
+          "name": "회전",
+          "description": "그림 회전(0, 90, 180, 270). 90/270이면 페이로드를 height×384 캔버스(용지 길이 방향)에 그리고, 출력은 그대로 384×height 스트립입니다."
+        },
+        "mode": {
+          "name": "모드",
+          "description": "'image'는 이미지용 발열/속도 프로파일, 'text'는 텍스트용(보통 더 진하고 선명한) 프로파일로 인쇄합니다."
+        },
+        "density": {
+          "name": "농도",
+          "description": "1~7. 4가 기본값이며 한 단계마다 발열 에너지가 15 % 바뀝니다."
+        },
+        "energy": {
+          "name": "에너지",
+          "description": "발열 에너지 원시값(0~65535). 농도보다 우선합니다. 비우면 프로파일 값을 씁니다."
+        },
+        "speed": {
+          "name": "속도",
+          "description": "행당 지연 원시값. 작을수록 빠릅니다. 비우면 프로파일 값을 씁니다."
+        },
+        "feed": {
+          "name": "인쇄 후 급지",
+          "description": "마지막 행 뒤에 절취선까지 밀어낼 도트 수. 기본은 프로파일 값(대부분 96)."
+        },
+        "copies": {
+          "name": "매수",
+          "description": "같은 내용을 몇 장 인쇄할지."
+        },
+        "preview": {
+          "name": "미리보기만",
+          "description": "인쇄하지 않고 렌더링 결과를 base64 데이터 URL로 반환합니다."
+        }
+      }
+    },
+    "feed": {
+      "name": "용지 급지",
+      "description": "인쇄 없이 용지를 밀어냅니다.",
+      "fields": {
+        "dots": {
+          "name": "도트",
+          "description": "밀어낼 도트 행 수(203 dpi: 8도트 ≈ 1 mm)."
+        }
+      }
+    }
+  }
+}

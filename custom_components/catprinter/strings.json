@@ -1,0 +1,133 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Choose the printer you want to set up.",
+        "data": {
+          "address": "Device",
+          "scan_interval": "Scan interval",
+          "keep_connection": "Keep BLE connection open"
+        },
+        "data_description": {
+          "scan_interval": "How often to read battery and status. Each poll opens a BLE connection, and an ESP32 Bluetooth proxy has only three connection slots.",
+          "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often."
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Do you want to set up {name}?",
+        "data": {
+          "scan_interval": "Scan interval",
+          "keep_connection": "Keep BLE connection open"
+        },
+        "data_description": {
+          "scan_interval": "How often to read battery and status. Each poll opens a BLE connection, and an ESP32 Bluetooth proxy has only three connection slots.",
+          "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often."
+        }
+      },
+      "manual": {
+        "title": "Add a printer manually",
+        "description": "No printer was recognised by its Bluetooth name ({count} other devices are visible). Pick the device and tell Home Assistant which model it is — these printers only report a firmware version, not their model, so the advertised name is the only way to know which speed and heat settings to use.",
+        "data": {
+          "address": "Device",
+          "model": "Printer model",
+          "scan_interval": "Scan interval",
+          "keep_connection": "Keep BLE connection open"
+        },
+        "data_description": {
+          "address": "Choose from the visible Bluetooth devices, or type the address (for example AA:BB:CC:DD:EE:FF) if the printer is not listed.",
+          "model": "Pick the model closest to yours. Upper- and lower-case suffixes (X6h vs X6H) are different models with different heat settings.",
+          "scan_interval": "How often to read battery and status. Each poll opens a BLE connection, and an ESP32 Bluetooth proxy has only three connection slots.",
+          "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often."
+        }
+      }
+    },
+    "abort": {
+      "already_in_progress": "Configuration flow is already in progress",
+      "already_configured": "Device is already configured",
+      "not_supported": "This device does not look like a supported cat printer.",
+      "unsupported_model": "This model requires a per-model secret (or a flow control scheme) that this integration does not implement.",
+      "cannot_connect": "Failed to connect",
+      "unknown": "Unexpected error"
+    },
+    "error": {
+      "invalid_address": "That is not a valid Bluetooth address."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Scan interval",
+          "keep_connection": "Keep BLE connection open",
+          "interval_ms": "Packet interval (0 = use device default)",
+          "packet_size_cap": "Maximum packet size"
+        },
+        "data_description": {
+          "scan_interval": "How often to read battery and status. Each poll opens a BLE connection, and an ESP32 Bluetooth proxy has only three connection slots.",
+          "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often.",
+          "interval_ms": "Pause between BLE packets. 0 uses the profile value for your model (2–6 ms on most). Raise it if prints come out with missing bands.",
+          "packet_size_cap": "Upper bound on packet size, whatever the printer's MTU says. Lower it over a Bluetooth proxy that drops large writes."
+        }
+      }
+    }
+  },
+  "services": {
+    "print": {
+      "name": "Print",
+      "description": "Render a payload and print it.",
+      "fields": {
+        "payload": {
+          "name": "Payload",
+          "description": "Payload describing what to draw (imagespec format)."
+        },
+        "height": {
+          "name": "Height",
+          "description": "Canvas height in pixels. Width is fixed to the print head (384 px on 2\" models)."
+        },
+        "rotate": {
+          "name": "Rotate",
+          "description": "Rotate the drawing (0, 90, 180, 270). With 90/270 you author the payload on a height × 384 canvas (along the paper) and the output is still a 384 × height strip."
+        },
+        "mode": {
+          "name": "Mode",
+          "description": "'image' prints with the image heat/speed profile; 'text' with the (usually hotter, crisper) text profile."
+        },
+        "density": {
+          "name": "Density",
+          "description": "Darkness 1–7. 4 is the default; each step changes heater energy by 15 %."
+        },
+        "energy": {
+          "name": "Energy",
+          "description": "Raw heater energy (0–65535). Overrides density. Leave empty to use the profile."
+        },
+        "speed": {
+          "name": "Speed",
+          "description": "Raw per-row delay. Smaller is faster. Leave empty to use the profile."
+        },
+        "feed": {
+          "name": "Feed after print",
+          "description": "Dots of paper to advance after the last row so the print clears the tear bar. Defaults to the profile (96 on most models)."
+        },
+        "copies": {
+          "name": "Copies",
+          "description": "How many identical copies to print."
+        },
+        "preview": {
+          "name": "Preview only",
+          "description": "Return the rendered image as a base64 data URL instead of printing it."
+        }
+      }
+    },
+    "feed": {
+      "name": "Feed paper",
+      "description": "Advance the paper without printing.",
+      "fields": {
+        "dots": {
+          "name": "Dots",
+          "description": "How many dot rows to advance (203 dpi: 8 dots ≈ 1 mm)."
+        }
+      }
+    }
+  }
+}

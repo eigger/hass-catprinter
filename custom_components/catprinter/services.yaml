@@ -1,0 +1,107 @@
+print:
+  target:
+    entity:
+      integration: catprinter
+  fields:
+    payload:
+      required: true
+      example: |
+        - type: text
+          value: Hello World!
+          x: 5
+          y: 5
+          size: 40
+      default:
+        - type: text
+          value: Hello World!
+          x: 5
+          y: 5
+          size: 40
+      selector:
+        object:
+    height:
+      required: false
+      example: 240
+      default: 240
+      selector:
+        number:
+          min: 8
+          max: 4000
+          step: 1
+    rotate:
+      required: false
+      example: "0"
+      selector:
+        number:
+          min: 0
+          max: 270
+          step: 90
+    mode:
+      required: false
+      default: image
+      selector:
+        select:
+          options:
+            - image
+            - text
+    density:
+      required: false
+      default: 4
+      selector:
+        number:
+          min: 1
+          max: 7
+          step: 1
+    energy:
+      required: false
+      example: 6000
+      selector:
+        number:
+          min: 0
+          max: 65535
+          step: 100
+    speed:
+      required: false
+      example: 10
+      selector:
+        number:
+          min: 1
+          max: 255
+          step: 1
+    feed:
+      required: false
+      example: 96
+      selector:
+        number:
+          min: 0
+          max: 2000
+          step: 1
+          unit_of_measurement: dots
+    copies:
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 20
+          step: 1
+    preview:
+      required: false
+      example: "false"
+      selector:
+        boolean:
+
+feed:
+  target:
+    entity:
+      integration: catprinter
+  fields:
+    dots:
+      required: false
+      default: 96
+      selector:
+        number:
+          min: 1
+          max: 2000
+          step: 1
+          unit_of_measurement: dots

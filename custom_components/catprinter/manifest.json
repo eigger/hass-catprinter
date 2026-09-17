@@ -1,0 +1,402 @@
+{
+  "domain": "catprinter",
+  "name": "Cat Printer",
+  "after_dependencies": [
+    "recorder"
+  ],
+  "bluetooth": [
+    {
+      "service_uuid": "0000af30-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "service_uuid": "0000ae30-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "local_name": "0019B-C-*"
+    },
+    {
+      "local_name": "0019B-D-*"
+    },
+    {
+      "local_name": "15P3-*"
+    },
+    {
+      "local_name": "58P5-*"
+    },
+    {
+      "local_name": "A33-*"
+    },
+    {
+      "local_name": "AN01-*"
+    },
+    {
+      "local_name": "CLICK-SOUND-*"
+    },
+    {
+      "local_name": "CMT-0510-*"
+    },
+    {
+      "local_name": "CP01-*"
+    },
+    {
+      "local_name": "CPLM10*"
+    },
+    {
+      "local_name": "CTP500*"
+    },
+    {
+      "local_name": "D1-*"
+    },
+    {
+      "local_name": "DL_GE225-*"
+    },
+    {
+      "local_name": "DL_X2-*"
+    },
+    {
+      "local_name": "DL_X2Pro-*"
+    },
+    {
+      "local_name": "DT1-0-*"
+    },
+    {
+      "local_name": "DT1-R-*"
+    },
+    {
+      "local_name": "DTR-R0-*"
+    },
+    {
+      "local_name": "DY01-*"
+    },
+    {
+      "local_name": "DY03-*"
+    },
+    {
+      "local_name": "DY33A-*"
+    },
+    {
+      "local_name": "DY49-*"
+    },
+    {
+      "local_name": "EMX-040256-*"
+    },
+    {
+      "local_name": "ewtto ET-Z0504-*"
+    },
+    {
+      "local_name": "FC02-*"
+    },
+    {
+      "local_name": "FL01-*"
+    },
+    {
+      "local_name": "GB01-*"
+    },
+    {
+      "local_name": "GB02-*"
+    },
+    {
+      "local_name": "GB02SH-*"
+    },
+    {
+      "local_name": "GB03-*"
+    },
+    {
+      "local_name": "GB03PH-*"
+    },
+    {
+      "local_name": "GB03PL-*"
+    },
+    {
+      "local_name": "GB03SH-*"
+    },
+    {
+      "local_name": "GB03SL-*"
+    },
+    {
+      "local_name": "GB04-*"
+    },
+    {
+      "local_name": "GB05-*"
+    },
+    {
+      "local_name": "GB06-*"
+    },
+    {
+      "local_name": "GT01-*"
+    },
+    {
+      "local_name": "GT02-*"
+    },
+    {
+      "local_name": "GT03-*"
+    },
+    {
+      "local_name": "GT04-*"
+    },
+    {
+      "local_name": "GV-MA211-*"
+    },
+    {
+      "local_name": "HD1-*"
+    },
+    {
+      "local_name": "HT0125-*"
+    },
+    {
+      "local_name": "IM.04-*"
+    },
+    {
+      "local_name": "IprintIt Printer-*"
+    },
+    {
+      "local_name": "JRX01-*"
+    },
+    {
+      "local_name": "JX01-*"
+    },
+    {
+      "local_name": "KF-5-*"
+    },
+    {
+      "local_name": "L1-*"
+    },
+    {
+      "local_name": "LGM01-*"
+    },
+    {
+      "local_name": "LP6-*"
+    },
+    {
+      "local_name": "LT01-*"
+    },
+    {
+      "local_name": "Luxorp.PX10-*"
+    },
+    {
+      "local_name": "LY01-*"
+    },
+    {
+      "local_name": "LY02-*"
+    },
+    {
+      "local_name": "LY03-*"
+    },
+    {
+      "local_name": "LY05-*"
+    },
+    {
+      "local_name": "M2-*"
+    },
+    {
+      "local_name": "ML-MP-01-*"
+    },
+    {
+      "local_name": "P1-*"
+    },
+    {
+      "local_name": "P10-*"
+    },
+    {
+      "local_name": "P2-*"
+    },
+    {
+      "local_name": "P20 max-*"
+    },
+    {
+      "local_name": "P5-*"
+    },
+    {
+      "local_name": "P6-*"
+    },
+    {
+      "local_name": "P7-*"
+    },
+    {
+      "local_name": "P7H-*"
+    },
+    {
+      "local_name": "Pocket Printer-*"
+    },
+    {
+      "local_name": "PR02-*"
+    },
+    {
+      "local_name": "PR20-*"
+    },
+    {
+      "local_name": "PR30-*"
+    },
+    {
+      "local_name": "PT001-*"
+    },
+    {
+      "local_name": "QDX01-*"
+    },
+    {
+      "local_name": "ROSSMANN-*"
+    },
+    {
+      "local_name": "RS9000-*"
+    },
+    {
+      "local_name": "RT034h-*"
+    },
+    {
+      "local_name": "S101-*"
+    },
+    {
+      "local_name": "S102-*"
+    },
+    {
+      "local_name": "S5A-*"
+    },
+    {
+      "local_name": "S9A-*"
+    },
+    {
+      "local_name": "SC03-*"
+    },
+    {
+      "local_name": "SC03H-*"
+    },
+    {
+      "local_name": "SC03h-*"
+    },
+    {
+      "local_name": "SC04-*"
+    },
+    {
+      "local_name": "SC04h-*"
+    },
+    {
+      "local_name": "SC05-*"
+    },
+    {
+      "local_name": "SeznikEcho-*"
+    },
+    {
+      "local_name": "SeznikNeo-*"
+    },
+    {
+      "local_name": "TCM690464-*"
+    },
+    {
+      "local_name": "TD-11308-*"
+    },
+    {
+      "local_name": "U1-*"
+    },
+    {
+      "local_name": "U2-*"
+    },
+    {
+      "local_name": "UXPORTMIP-*"
+    },
+    {
+      "local_name": "WJ-HOT-PRT-*"
+    },
+    {
+      "local_name": "WL01-*"
+    },
+    {
+      "local_name": "WQ02-*"
+    },
+    {
+      "local_name": "wts07-*"
+    },
+    {
+      "local_name": "X1-*"
+    },
+    {
+      "local_name": "X100-*"
+    },
+    {
+      "local_name": "X102-*"
+    },
+    {
+      "local_name": "X103H-*"
+    },
+    {
+      "local_name": "X103h-*"
+    },
+    {
+      "local_name": "X18-*"
+    },
+    {
+      "local_name": "X2H-*"
+    },
+    {
+      "local_name": "X2h-*"
+    },
+    {
+      "local_name": "X5-*"
+    },
+    {
+      "local_name": "X5h-*"
+    },
+    {
+      "local_name": "X5H-*"
+    },
+    {
+      "local_name": "X5HP-*"
+    },
+    {
+      "local_name": "X6-*"
+    },
+    {
+      "local_name": "X6h-*"
+    },
+    {
+      "local_name": "X6H-*"
+    },
+    {
+      "local_name": "X6HP-*"
+    },
+    {
+      "local_name": "X7-*"
+    },
+    {
+      "local_name": "X7h-*"
+    },
+    {
+      "local_name": "X7H-*"
+    },
+    {
+      "local_name": "X7HP-*"
+    },
+    {
+      "local_name": "XC9-*"
+    },
+    {
+      "local_name": "XC9-FL01-*"
+    },
+    {
+      "local_name": "XiaoWa-*"
+    },
+    {
+      "local_name": "YK06-*"
+    },
+    {
+      "local_name": "YMS-BT01-*"
+    },
+    {
+      "local_name": "ZHHC-*"
+    }
+  ],
+  "codeowners": [
+    "@eigger"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "bluetooth_adapters"
+  ],
+  "documentation": "https://github.com/eigger/hass-catprinter",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/eigger/hass-catprinter/issues",
+  "requirements": [
+    "imagespec[datamatrix]==0.4.0"
+  ],
+  "version": "0.1.0"
+}
