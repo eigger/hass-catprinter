@@ -17,7 +17,7 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlowWithReload,
 )
-from homeassistant.const import CONF_ADDRESS, CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     NumberSelector,
@@ -39,10 +39,11 @@ from .const import (
     CONF_KEEP_CONNECTION,
     CONF_MODEL,
     CONF_PACKET_SIZE_CAP,
+    CONF_POLL_MINUTES,
     DEFAULT_INTERVAL_MS,
     DEFAULT_KEEP_CONNECTION,
     DEFAULT_PACKET_SIZE_CAP,
-    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_POLL_MINUTES,
     DOMAIN,
 )
 
@@ -66,10 +67,10 @@ def _model_selector() -> SelectSelector:
 
 
 SETUP_SCHEMA = {
-    vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): NumberSelector(
+    vol.Required(CONF_POLL_MINUTES, default=DEFAULT_POLL_MINUTES): NumberSelector(
         NumberSelectorConfig(
-            min=30, max=9999, step=1, mode=NumberSelectorMode.BOX,
-            unit_of_measurement="seconds",
+            min=1, max=1440, step=1, mode=NumberSelectorMode.BOX,
+            unit_of_measurement="minutes",
         )
     ),
     vol.Required(CONF_KEEP_CONNECTION, default=DEFAULT_KEEP_CONNECTION): bool,
