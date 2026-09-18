@@ -18,7 +18,7 @@ from bleak_retry_connector import establish_connection
 from PIL import Image
 
 from .client import CatPrinterClient
-from .errors import CatPrinterError, ErrorCode, UnsupportedDeviceError
+from .errors import CatPrinterError, ErrorCode, PrinterError, UnsupportedDeviceError
 from .imaging import fit_to_printhead, to_raster
 from .models import DEFAULT_DENSITY, DeviceProfile, find_profile_by_name, get_profile
 from .protocol import (
@@ -283,6 +283,12 @@ class CatPrinterDevice:
 
             try:
                 await printer.start()
+                # Ask before sending: a fault now means the raster would only
+                # be discarded, and the error surfaces immediately instead of
+                # after the whole job has been pushed.
+                state = await printer.query_state()
+                if state is not None and state.fault:
+                    raise PrinterError(state.fault)
                 await printer.print_job(job, bitmap.height * copies, on_progress)
             finally:
                 await printer.stop()

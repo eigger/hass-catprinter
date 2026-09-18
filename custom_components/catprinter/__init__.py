@@ -86,6 +86,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 "Printer %s is not currently visible; keeping last known data", address
             )
             return device.ble_data
+        if device.lock.locked():
+            # A print (or feed) holds the device; it refreshes status itself via
+            # the trailing A3, so queueing another connection behind it only
+            # adds a reconnect right after the job.
+            _LOGGER.debug("Printer %s is busy; skipping this poll", address)
+            return device.ble_data
         try:
             return await device.update_device(ble_device)
         except Exception as err:  # noqa: BLE001 - never let polling kill the entry
