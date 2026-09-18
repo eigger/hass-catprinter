@@ -54,6 +54,45 @@
       "invalid_address": "올바른 블루투스 주소가 아닙니다."
     }
   },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "상태",
+        "state": {
+          "ok": "정상",
+          "printing": "인쇄 중",
+          "out_of_paper": "용지 없음",
+          "cover_open": "커버 열림",
+          "overheating": "과열"
+        }
+      },
+      "conditions": {
+        "name": "상태 플래그"
+      },
+      "label_sensor": {
+        "name": "라벨 센서"
+      },
+      "print_duration": {
+        "name": "인쇄 시간"
+      }
+    },
+    "binary_sensor": {
+      "out_of_paper": {
+        "name": "용지 없음"
+      },
+      "cover_open": {
+        "name": "커버 열림"
+      },
+      "overheating": {
+        "name": "과열"
+      }
+    },
+    "image": {
+      "last_print": {
+        "name": "마지막 인쇄"
+      }
+    }
+  },
   "options": {
     "step": {
       "init": {

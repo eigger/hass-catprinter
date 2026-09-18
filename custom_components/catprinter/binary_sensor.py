@@ -41,35 +41,33 @@ class StatusBinarySensorEntityDescription(BinarySensorEntityDescription):
 STATUS_SENSORS: tuple[StatusBinarySensorEntityDescription, ...] = (
     StatusBinarySensorEntityDescription(
         key="out_of_paper",
-        name="Out of Paper",
+        translation_key="out_of_paper",
         status_value="out_of_paper",
         device_class=BinarySensorDeviceClass.PROBLEM,
         icon="mdi:paper-roll-outline",
     ),
     StatusBinarySensorEntityDescription(
         key="cover_open",
-        name="Cover Open",
+        translation_key="cover_open",
         status_value="cover_open",
         device_class=BinarySensorDeviceClass.OPENING,
         icon="mdi:printer-alert",
     ),
     StatusBinarySensorEntityDescription(
         key="overheating",
-        name="Overheating",
+        translation_key="overheating",
         status_value="overheating",
         device_class=BinarySensorDeviceClass.HEAT,
         icon="mdi:thermometer-alert",
     ),
     StatusBinarySensorEntityDescription(
         key="low_battery",
-        name="Low Battery",
         status_value="low_battery",
         device_class=BinarySensorDeviceClass.BATTERY,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     StatusBinarySensorEntityDescription(
         key="charging",
-        name="Charging",
         status_value="charging",
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -170,7 +168,6 @@ class CatPrinterConnectionBinarySensor(_DeviceStateBinarySensor):
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:bluetooth-connect"
-    _attr_name = "Connection"
     _key = "connection"
 
     def _subscribe(self) -> None:
@@ -186,7 +183,6 @@ class CatPrinterPrintingBinarySensor(_DeviceStateBinarySensor):
 
     _attr_device_class = BinarySensorDeviceClass.RUNNING
     _attr_icon = "mdi:printer-wireless"
-    _attr_name = "Printing"
     _key = "printing"
 
     def _subscribe(self) -> None:

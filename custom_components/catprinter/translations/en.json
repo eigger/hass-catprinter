@@ -54,6 +54,45 @@
       "invalid_address": "That is not a valid Bluetooth address."
     }
   },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "ok": "OK",
+          "printing": "Printing",
+          "out_of_paper": "Out of paper",
+          "cover_open": "Cover open",
+          "overheating": "Overheating"
+        }
+      },
+      "conditions": {
+        "name": "Conditions"
+      },
+      "label_sensor": {
+        "name": "Label sensor"
+      },
+      "print_duration": {
+        "name": "Print duration"
+      }
+    },
+    "binary_sensor": {
+      "out_of_paper": {
+        "name": "Out of paper"
+      },
+      "cover_open": {
+        "name": "Cover open"
+      },
+      "overheating": {
+        "name": "Overheating"
+      }
+    },
+    "image": {
+      "last_print": {
+        "name": "Last print"
+      }
+    }
+  },
   "options": {
     "step": {
       "init": {
