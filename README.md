@@ -9,6 +9,12 @@ Home Assistant integration for the cheap Bluetooth "cat" thermal printers
 
 Works over Home Assistant's Bluetooth stack, including ESPHome Bluetooth proxies.
 
+## Gallery
+
+| X6h |
+| :---: |
+| <img src="https://raw.githubusercontent.com/eigger/hass-catprinter/main/docs/images/x6h.jpg" width="300" alt="X6h cat printer with a printed cat"> |
+
 ## Supported models
 
 Any printer advertising as `<model>-XXXX` where `<model>` is in
