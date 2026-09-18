@@ -26,6 +26,7 @@ from .protocol import (
     FrameParser,
     cmd_get_info,
     cmd_get_state,
+    cmd_stop,
     decode_flow,
     decode_info,
     decode_state,
@@ -35,9 +36,10 @@ from .protocol import (
 _LOGGER = logging.getLogger(__name__)
 
 QUERY_TIMEOUT = 5.0
-#: How long to sit on a "buffer full" before assuming the "drained" notification
-#: was lost and pushing on. Generous: a full 384-px buffer prints in well under
-#: this.
+#: How long to sit on a "buffer full" before giving the job up. A full buffer
+#: prints in a few seconds; staying full this long means the printer has
+#: stopped feeding (paper out, cover open) and pushing more bytes would only
+#: corrupt what it prints once it resumes.
 FLOW_RESUME_TIMEOUT = 15.0
 #: Base wait for the trailing ``A3`` of a job, plus a per-row allowance.
 PRINT_RESULT_BASE = 30.0
@@ -155,11 +157,11 @@ class CatPrinterClient:
                 try:
                     await asyncio.wait_for(self._flow_ok.wait(), FLOW_RESUME_TIMEOUT)
                 except TimeoutError:
-                    _LOGGER.warning(
-                        "No buffer-drained notification within %.0fs; resuming",
-                        FLOW_RESUME_TIMEOUT,
-                    )
-                    self._flow_ok.set()
+                    raise CatPrinterError(
+                        ErrorCode.STALLED,
+                        f"Printer stopped taking data at {sent}/{total} bytes "
+                        f"for {FLOW_RESUME_TIMEOUT:.0f}s",
+                    ) from None
             chunk = data[sent : sent + self._packet_size]
             await self._client.write_gatt_char(self._write_uuid, chunk, response=False)
             sent += len(chunk)
@@ -181,7 +183,12 @@ class CatPrinterClient:
         waiter = self._add_waiter(CMD_GET_STATE)
         timeout = min(PRINT_RESULT_BASE + rows * PRINT_RESULT_PER_ROW, PRINT_RESULT_MAX)
         try:
-            await self.send(job, on_progress)
+            try:
+                await self.send(job, on_progress)
+            except CatPrinterError as err:
+                if err.code == ErrorCode.STALLED:
+                    await self._abort()
+                raise
             deadline = monotonic() + timeout
             while True:
                 if waiter.done():
@@ -196,6 +203,7 @@ class CatPrinterClient:
                         ErrorCode.NOT_CONNECTED, "Printer disconnected during the job"
                     )
                 if monotonic() >= deadline:
+                    await self._abort()
                     raise CatPrinterError(
                         ErrorCode.TIMEOUT,
                         f"Printer did not confirm the job within {timeout:.0f}s",
@@ -203,6 +211,15 @@ class CatPrinterClient:
                 await asyncio.wait({waiter}, timeout=0.5)
         finally:
             self._drop_waiter(CMD_GET_STATE, waiter)
+
+    async def _abort(self) -> None:
+        """Best-effort ``A6 05`` so a stalled printer drops the rest of the job."""
+        if not self._client.is_connected or self._write_uuid is None:
+            return
+        try:
+            await self._client.write_gatt_char(self._write_uuid, cmd_stop(), response=False)
+        except Exception:  # noqa: BLE001 - the job is already lost
+            _LOGGER.debug("Abort command failed", exc_info=True)
 
     async def feed(self, dots: int, step: int = 48) -> None:
         await self.send(feed_sequence(dots, step))

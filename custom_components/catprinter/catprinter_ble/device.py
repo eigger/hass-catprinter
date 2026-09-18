@@ -289,7 +289,20 @@ class CatPrinterDevice:
                 state = await printer.query_state()
                 if state is not None and state.fault:
                     raise PrinterError(state.fault)
-                await printer.print_job(job, bitmap.height * copies, on_progress)
+                try:
+                    await printer.print_job(job, bitmap.height * copies, on_progress)
+                except CatPrinterError as err:
+                    if err.code not in (ErrorCode.STALLED, ErrorCode.TIMEOUT):
+                        raise
+                    # The printer went quiet mid-job. It does not push status
+                    # on its own, and a stalled command queue does not answer
+                    # queries either, so reconnect and ask on a clean link to
+                    # name the cause.
+                    await printer.stop()
+                    fault = await self._diagnose(ble_device)
+                    if fault:
+                        raise PrinterError(fault) from err
+                    raise
             finally:
                 await printer.stop()
                 self._print_end = time.time()
@@ -308,6 +321,22 @@ class CatPrinterDevice:
             "energy": params.energy,
             "speed": params.speed,
         }
+
+    async def _diagnose(self, ble_device: BLEDevice) -> str | None:
+        """Drop the connection, reconnect and read the status once."""
+        await self.disconnect()
+        try:
+            client = await self._ensure_connected(ble_device)
+            printer = self._make_client(client, self.profile)  # type: ignore[arg-type]
+            try:
+                await printer.start()
+                state = await printer.query_state()
+            finally:
+                await printer.stop()
+        except Exception:  # noqa: BLE001 - diagnosis is best effort
+            _LOGGER.debug("Could not read status after a stalled job", exc_info=True)
+            return None
+        return state.fault if state is not None else None
 
     async def feed(self, ble_device: BLEDevice, dots: int) -> None:
         """Advance the paper without printing."""
