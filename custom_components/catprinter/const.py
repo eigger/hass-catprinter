@@ -27,7 +27,8 @@ CONF_PACKET_SIZE_CAP = "packet_size_cap"
 DEFAULT_POLL_MINUTES = 15
 DEFAULT_KEEP_CONNECTION = False
 
-#: 0 means "use the value from the device profile" (2-6 ms for most models).
+#: 0 means "auto": the device profile value (2-6 ms for most models) on a
+#: local adapter, 20 ms through an ESPHome Bluetooth proxy.
 DEFAULT_INTERVAL_MS = 0
 
 #: Hard ceiling on packet size regardless of what the printer's profile says.

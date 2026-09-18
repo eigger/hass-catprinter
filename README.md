@@ -104,10 +104,13 @@ Advance the paper by `dots` rows (8 dots ≈ 1 mm at 203 dpi).
   idle, and drops an idle BLE link after about 8 minutes, so polling is a
   short connect–query–disconnect rather than a held connection.
 
-- *Packet interval* — pause between BLE writes; 0 uses the profile value for
-  your model (2–6 ms). Raise if prints show missing bands.
-- *Maximum packet size* — cap regardless of negotiated MTU; lower over a proxy
-  that drops large writes.
+- *Packet interval* — pause between BLE writes; 0 is automatic: the profile
+  value for your model (2–6 ms) on a local adapter, 20 ms through an ESPHome
+  Bluetooth proxy. Raise if prints show missing bands.
+- *Maximum packet size* — cap regardless of negotiated MTU. Through an ESPHome
+  proxy it is capped at 100 bytes automatically; an ESP32 drops
+  write-without-response packets when fed full-size ones every few ms, which
+  shows up as garbage bands or a print that stops early.
 
 ## Protocol
 

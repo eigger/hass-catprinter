@@ -158,3 +158,28 @@ def test_flow_control_resumes_after_drain(printer, monkeypatch):
         return await task
 
     assert asyncio.run(run()).fault is None
+
+
+def test_proxy_detection_and_pacing():
+    from catprinter_ble.device import PROXY_INTERVAL_MS, PROXY_PACKET_SIZE, CatPrinterDevice, via_proxy
+
+    local = SimpleNamespace(address="AA", name="X6h-0000", details={"path": "/org/bluez/hci0/dev_AA"})
+    remote = SimpleNamespace(address="AA", name="X6h-0000", details={"source": "00:1A:7D:DA:71:0A", "address_type": 1})
+    assert not via_proxy(local)
+    assert via_proxy(remote)
+
+    dev = CatPrinterDevice("AA")
+    dev.profile = find_profile_by_name("X6h-0000")
+    fake = FakeClient()
+
+    dev._proxy = False
+    c = dev._make_client(fake, dev.profile)
+    assert c._interval == 0.004 and c._packet_size_cap == 180
+
+    dev._proxy = True
+    c = dev._make_client(fake, dev.profile)
+    assert c._interval == PROXY_INTERVAL_MS / 1000 and c._packet_size_cap == PROXY_PACKET_SIZE
+
+    dev._interval_ms = 50  # explicit user value wins over the proxy default
+    c = dev._make_client(fake, dev.profile)
+    assert c._interval == 0.05

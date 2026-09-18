@@ -31,6 +31,25 @@ from .protocol import (
 
 _LOGGER = logging.getLogger(__name__)
 
+#: Pacing used when the link goes through a remote (ESPHome) Bluetooth proxy
+#: and the user left the interval on "auto". The vendor profile values assume
+#: a phone's direct BLE link; an ESP32 proxy silently drops write-without-
+#: response packets when fed 177 bytes every 4 ms, which shows up as garbage
+#: bands or a truncated print.
+PROXY_INTERVAL_MS = 20
+PROXY_PACKET_SIZE = 100
+
+
+def via_proxy(ble_device: BLEDevice) -> bool:
+    """True when Home Assistant reached this device through a remote scanner.
+
+    Local adapters carry backend-specific details (a BlueZ object path, a
+    WinRT/CoreBluetooth handle); remote ESPHome scanners publish a plain dict
+    with the proxy's ``source`` address.
+    """
+    details = getattr(ble_device, "details", None)
+    return isinstance(details, dict) and "source" in details
+
 
 @dataclasses.dataclass
 class BLEData:
@@ -71,6 +90,7 @@ class CatPrinterDevice:
         self.keep_connection = keep_connection
         self._interval_ms = interval_ms
         self._packet_size_cap = packet_size_cap
+        self._proxy = False
 
         self.lock = asyncio.Lock()
         self.client: BleakClient | None = None
@@ -162,6 +182,9 @@ class CatPrinterDevice:
             assert self.client is not None
             return self.client
 
+        self._proxy = via_proxy(ble_device)
+        if self._proxy:
+            _LOGGER.debug("%s reached via Bluetooth proxy; using proxy pacing", ble_device.address)
         self.client = await establish_connection(
             BleakClient,
             ble_device,
@@ -174,11 +197,17 @@ class CatPrinterDevice:
         return self.client
 
     def _make_client(self, client: BleakClient, profile: DeviceProfile) -> CatPrinterClient:
+        interval = self._interval_ms
+        cap = self._packet_size_cap
+        if self._proxy:
+            if interval is None:
+                interval = max(profile.interval_ms, PROXY_INTERVAL_MS)
+            cap = min(cap, PROXY_PACKET_SIZE)
         printer = CatPrinterClient(
             client,
             profile,
-            interval_ms=self._interval_ms,
-            packet_size_cap=self._packet_size_cap,
+            interval_ms=interval,
+            packet_size_cap=cap,
         )
         printer.on_state = self._apply_state
         return printer
