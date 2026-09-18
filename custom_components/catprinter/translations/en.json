@@ -105,8 +105,8 @@
         "data_description": {
           "poll_minutes": "Minutes between battery/status reads. Each poll opens a short BLE connection (an ESP32 Bluetooth proxy has three slots). The printer stays reachable for at least an hour idle, so 15 is a good default.",
           "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often.",
-          "interval_ms": "Pause between BLE packets. 0 uses the profile value for your model (2–6 ms on most). Raise it if prints come out with missing bands.",
-          "packet_size_cap": "Upper bound on packet size, whatever the printer's MTU says. Lower it over a Bluetooth proxy that drops large writes."
+          "interval_ms": "Pause between BLE packets. 0 is automatic: the profile value for your model (2–6 ms) on a local adapter, 20 ms through an ESPHome Bluetooth proxy. Raise it if prints come out with missing bands.",
+          "packet_size_cap": "Upper bound on packet size, whatever the printer's MTU says. Through an ESPHome Bluetooth proxy it is capped at 100 bytes automatically."
         }
       }
     }
