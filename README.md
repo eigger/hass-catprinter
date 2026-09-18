@@ -18,7 +18,7 @@ MTU / pacing / heat settings.
 
 | Status | Models |
 |---|---|
-| ✅ Confirmed | **X6h** (firmware 3.0.5D) |
+| ✅ Confirmed | **X6h** (firmware 3.0.5D) — local adapter and ESPHome Bluetooth proxy |
 | 🟡 Untested, same protocol | GB01, GB02, GB03(+SH/PH/PL/SL), GB04–06, GT01–04, X5/X6/X7 (+h/H/HP), X2h, X100–X103, SC03/SC04, LY01–05, P1/P2/P5/P6/P7, PR02/PR07, S101/S102, DY01/DY03, LT01, 58P5, WL01, M2, and the rest of the table |
 | ❌ Not supported | FL01, KF-5, CP01, JRX01, QDX01, RS9000, DY49, SeznikNeo, WJ-HOT-PRT, wts07, XiaoWa — these require a per-model `D1` secret. YMS-BT01 — different flow control. 4"/8" (A4) and Wi-Fi models — different data path. |
 
