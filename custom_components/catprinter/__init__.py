@@ -16,7 +16,6 @@ from homeassistant.const import (
     ATTR_AREA_ID,
     ATTR_DEVICE_ID,
     ATTR_ENTITY_ID,
-    CONF_SCAN_INTERVAL,
     Platform,
 )
 from homeassistant.core import (
@@ -35,10 +34,11 @@ from .const import (
     CONF_KEEP_CONNECTION,
     CONF_MODEL,
     CONF_PACKET_SIZE_CAP,
+    CONF_POLL_MINUTES,
     DEFAULT_INTERVAL_MS,
     DEFAULT_KEEP_CONNECTION,
     DEFAULT_PACKET_SIZE_CAP,
-    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_POLL_MINUTES,
     DOMAIN,
     EMPTY_PNG,
     PRINT_LOCK,
@@ -64,7 +64,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     address = entry.unique_id
     assert address is not None
 
-    scan_interval = float(_option(entry, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
+    poll_minutes = float(_option(entry, CONF_POLL_MINUTES, DEFAULT_POLL_MINUTES))
     keep_connection = bool(_option(entry, CONF_KEEP_CONNECTION, DEFAULT_KEEP_CONNECTION))
     interval_ms = int(_option(entry, CONF_INTERVAL_MS, DEFAULT_INTERVAL_MS))
     packet_size_cap = int(_option(entry, CONF_PACKET_SIZE_CAP, DEFAULT_PACKET_SIZE_CAP))
@@ -103,7 +103,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER,
         name=DOMAIN,
         update_method=_async_update_method,
-        update_interval=timedelta(seconds=scan_interval),
+        update_interval=timedelta(minutes=poll_minutes),
     )
     coordinator.data = device.ble_data
     await coordinator.async_refresh()

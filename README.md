@@ -99,6 +99,11 @@ Advance the paper by `dots` rows (8 dots ≈ 1 mm at 203 dpi).
 
 **Configure** on the integration exposes:
 
+- *Status poll interval* — minutes between battery/status reads (default 15).
+  Measured on X6h: the printer stays on and connectable for at least an hour
+  idle, and drops an idle BLE link after about 8 minutes, so polling is a
+  short connect–query–disconnect rather than a held connection.
+
 - *Packet interval* — pause between BLE writes; 0 uses the profile value for
   your model (2–6 ms). Raise if prints show missing bands.
 - *Maximum packet size* — cap regardless of negotiated MTU; lower over a proxy

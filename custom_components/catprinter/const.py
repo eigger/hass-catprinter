@@ -17,11 +17,14 @@ PRINT_LOCK = f"{DOMAIN}_print_lock"
 #: Model chosen by hand when a printer's advertised name matches no profile.
 CONF_MODEL = "model"
 
+CONF_POLL_MINUTES = "poll_minutes"
 CONF_KEEP_CONNECTION = "keep_connection"
 CONF_INTERVAL_MS = "interval_ms"
 CONF_PACKET_SIZE_CAP = "packet_size_cap"
 
-DEFAULT_SCAN_INTERVAL = 600
+#: The printer stays on and reachable for at least an hour while idle, so a
+#: 15-minute status poll costs little battery and keeps the sensors fresh.
+DEFAULT_POLL_MINUTES = 15
 DEFAULT_KEEP_CONNECTION = False
 
 #: 0 means "use the value from the device profile" (2-6 ms for most models).
