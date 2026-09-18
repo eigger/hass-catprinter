@@ -40,6 +40,7 @@ def _make_context(hass, *, default_font, palette):
         history_provider=history_provider,
         default_font=default_font,
         palette=palette,
+        allow_local_images=True,
     )
 
 
