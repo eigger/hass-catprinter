@@ -35,6 +35,7 @@ SENSORS: dict[str, SensorEntityDescription] = {
         device_class=SensorDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "status": SensorEntityDescription(
         key="status",

@@ -45,15 +45,18 @@ one central can be connected at a time.
 
 ## Entities
 
-| Entity | Source |
-|---|---|
-| `sensor.*_battery` | `A3` reply, decoded per the model's battery scheme |
-| `sensor.*_status` | `ok` / `printing` / `out_of_paper` / `cover_open` / `overheating` |
-| `sensor.*_conditions` | every active status bit, comma-separated |
-| `sensor.*_print_duration` | last / current job |
-| `binary_sensor.*_out_of_paper`, `cover_open`, `overheating`, `low_battery`, `charging` | status bits |
-| `binary_sensor.*_connection`, `printing` | live |
-| `image.*_last_print` | what was last rendered |
+| Entity | Category | Source |
+|---|---|---|
+| `sensor.*_status` | | `ok` / `printing` / `out_of_paper` / `cover_open` / `overheating` |
+| `binary_sensor.*_out_of_paper`, `cover_open`, `overheating` | | status bits |
+| `binary_sensor.*_printing` | | live |
+| `image.*_last_print` | | what was last rendered |
+| `sensor.*_battery` | diagnostic | `A3` reply, decoded per the model's battery scheme |
+| `sensor.*_conditions` | diagnostic | every active status bit, comma-separated |
+| `sensor.*_print_duration` | diagnostic | last / current job |
+| `sensor.*_label_sensor` | diagnostic, disabled by default | raw label sensor byte |
+| `binary_sensor.*_low_battery`, `charging` | diagnostic | status bits |
+| `binary_sensor.*_connection` | diagnostic | live |
 
 ## Services
 
