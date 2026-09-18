@@ -31,7 +31,6 @@ _LOGGER = logging.getLogger(__name__)
 SENSORS: dict[str, SensorEntityDescription] = {
     "battery": SensorEntityDescription(
         key="battery",
-        name="Battery",
         device_class=SensorDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -39,20 +38,20 @@ SENSORS: dict[str, SensorEntityDescription] = {
     ),
     "status": SensorEntityDescription(
         key="status",
-        name="Status",
+        translation_key="status",
         icon="mdi:printer-alert",
         device_class=SensorDeviceClass.ENUM,
         options=["ok", "printing", "out_of_paper", "cover_open", "overheating"],
     ),
     "conditions": SensorEntityDescription(
         key="conditions",
-        name="Conditions",
+        translation_key="conditions",
         icon="mdi:list-status",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "label_sensor": SensorEntityDescription(
         key="label_sensor",
-        name="Label Sensor",
+        translation_key="label_sensor",
         icon="mdi:eye-outline",
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -108,7 +107,7 @@ class CatPrinterPrintDurationSensor(
     """How long the current or last print job took."""
 
     _attr_has_entity_name = True
-    _attr_name = "Print Duration"
+    _attr_translation_key = "print_duration"
     _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_state_class = SensorStateClass.MEASUREMENT
