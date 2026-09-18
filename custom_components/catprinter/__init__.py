@@ -205,8 +205,11 @@ async def _print_on_entry(hass: HomeAssistant, entry_id: str, service: ServiceCa
             )
         except (CatPrinterError, RuntimeError) as err:
             raise HomeAssistantError(f"Failed to print: {err}") from err
+        finally:
+            # The job (or its failure diagnosis) refreshed the status; show it
+            # whether or not the print went through.
+            coordinator.async_set_updated_data(device.ble_data)
 
-    coordinator.async_set_updated_data(device.ble_data)
     result["image"] = image_data
     return result
 

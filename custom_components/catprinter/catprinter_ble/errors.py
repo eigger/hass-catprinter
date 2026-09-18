@@ -14,6 +14,7 @@ class ErrorCode(StrEnum):
     NOT_CONNECTED = "not_connected"
     PRINT_FAILED = "print_failed"
     TIMEOUT = "timeout"
+    STALLED = "stalled"
     PRINTER_ERROR = "printer_error"
 
 
