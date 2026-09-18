@@ -11,7 +11,7 @@
         },
         "data_description": {
           "poll_minutes": "Minutes between battery/status reads. Each poll opens a short BLE connection (an ESP32 Bluetooth proxy has three slots). The printer stays reachable for at least an hour idle, so 15 is a good default.",
-          "keep_connection": "Holds the BLE connection open between jobs. The printer drops an idle link after about 8 minutes on its own, so this mainly helps when you print often; otherwise leave it off and save a proxy connection slot."
+          "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often."
         }
       },
       "bluetooth_confirm": {
@@ -22,7 +22,7 @@
         },
         "data_description": {
           "poll_minutes": "Minutes between battery/status reads. Each poll opens a short BLE connection (an ESP32 Bluetooth proxy has three slots). The printer stays reachable for at least an hour idle, so 15 is a good default.",
-          "keep_connection": "Holds the BLE connection open between jobs. The printer drops an idle link after about 8 minutes on its own, so this mainly helps when you print often; otherwise leave it off and save a proxy connection slot."
+          "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often."
         }
       },
       "manual": {
@@ -38,7 +38,7 @@
           "address": "Choose from the visible Bluetooth devices, or type the address (for example AA:BB:CC:DD:EE:FF) if the printer is not listed.",
           "model": "Pick the model closest to yours. Upper- and lower-case suffixes (X6h vs X6H) are different models with different heat settings.",
           "poll_minutes": "Minutes between battery/status reads. Each poll opens a short BLE connection (an ESP32 Bluetooth proxy has three slots). The printer stays reachable for at least an hour idle, so 15 is a good default.",
-          "keep_connection": "Holds the BLE connection open between jobs. The printer drops an idle link after about 8 minutes on its own, so this mainly helps when you print often; otherwise leave it off and save a proxy connection slot."
+          "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often."
         }
       }
     },
@@ -104,7 +104,7 @@
         },
         "data_description": {
           "poll_minutes": "Minutes between battery/status reads. Each poll opens a short BLE connection (an ESP32 Bluetooth proxy has three slots). The printer stays reachable for at least an hour idle, so 15 is a good default.",
-          "keep_connection": "Holds the BLE connection open between jobs. The printer drops an idle link after about 8 minutes on its own, so this mainly helps when you print often; otherwise leave it off and save a proxy connection slot.",
+          "keep_connection": "Holds the BLE connection open between jobs, trading a proxy connection slot for a faster first print. Leave off unless you print often.",
           "interval_ms": "Pause between BLE packets. 0 uses the profile value for your model (2–6 ms on most). Raise it if prints come out with missing bands.",
           "packet_size_cap": "Upper bound on packet size, whatever the printer's MTU says. Lower it over a Bluetooth proxy that drops large writes."
         }
