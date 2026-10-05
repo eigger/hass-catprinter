@@ -32,6 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # imagespec>=1.0.0 requires Python >=3.13.
         python-version: ["3.13", "3.14"]
     steps:
       - uses: actions/checkout@v5
