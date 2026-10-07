@@ -69,7 +69,7 @@ one central can be connected at a time.
 ### `catprinter.print`
 
 Payload format: [imagespec](https://pypi.org/project/imagespec/).
-
+#### Printing text or generate and print a qrcode (`text` / `qrcode`)
 ```yaml
 service: catprinter.print
 target:
@@ -96,6 +96,32 @@ Optional raw overrides: `energy` (heater energy, 0–65535), `speed` (per-row
 delay, smaller is faster), `copies`, `rotate`, `preview`. Canvas width is
 always the print head width (384 px on 2" models); only `height` is yours.
 The response contains the rendered PNG as a data URL plus the energy/speed used.
+
+#### Printing an image from a URL (`dlimg`)
+
+To download, process, and print an image directly from the web, use the `dlimg` payload type:
+
+```yaml
+action: catprinter.print
+target:
+  device_id: <your printer>
+data:
+  feed: 0
+  density: 3
+  mode: image
+  payload:
+    - type: dlimg
+      url: https://example.org/image.jpg
+      x: 10
+      y: 10
+      xsize: 312
+      ysize: 312
+      dither: atkinson
+  height: 332
+```
+**Notes:**
+- Replace `https://example.org/image.jpg` with the direct URL to your image file.
+- The `height` parameter currently needs to be adjusted manually to match the total height of your print job (e.g., `y` + `ysize` + padding) so that paper feeds correctly at the end.
 
 ### `catprinter.feed`
 
