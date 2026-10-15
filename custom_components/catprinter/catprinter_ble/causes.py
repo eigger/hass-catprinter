@@ -64,7 +64,7 @@ def printer_cause(failure: Failure, operation: str) -> str | None:
         # Connected and subscribed, then silence: the protocol had started, so
         # the shared "refused the session" sentence would mislead.
         return (
-            f"The printer is connected but did not answer ({exc.step}). It may be "
+            f"The printer is connected but did not answer ({exc.step or 'status query'}). It may be "
             "busy, going to sleep, or a different model or firmware than selected."
         )
     if isinstance(exc, CatPrinterError) and exc.code in _CODE_CAUSES:

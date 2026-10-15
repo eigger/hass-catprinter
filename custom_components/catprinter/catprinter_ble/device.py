@@ -84,6 +84,9 @@ class _Session:
     #: Set by the body when the caller will report the outcome itself after
     #: the link is closed (a stalled print is re-judged by ``_diagnose``).
     defer_commit: bool = False
+    #: Set by the body when it swallowed a failure that proves the kept link is
+    #: hung (a write that never returned), so it is closed rather than reused.
+    discard_link: bool = False
 
 
 @dataclasses.dataclass
@@ -258,22 +261,26 @@ class CatPrinterDevice:
             outcome = exc
             raise
         finally:
-            if (
-                self.keep_connection
-                and isinstance(outcome, (WriteTimeout, SessionDropped))
-                and self.client is not None
-            ):
-                # A link whose writes hang can still claim to be connected (a
-                # proxy that stopped answering). Reusing it would fail every
-                # later job the same way, so close it and connect afresh.
-                await self.disconnect()
-            if self.client is not None and (
-                not self.keep_connection or not self.client.is_connected
-            ):
-                self.client = None
-                self._notify_connection()
-            if session is None or not session.defer_commit or outcome is not None:
-                self._commit_session(operation, trace, outcome)
+            # A link whose writes hang can still claim to be connected (a proxy
+            # that stopped answering). Reusing it would fail every later job
+            # the same way, so a kept link is closed and the next job connects
+            # afresh. Nested so a cancel while closing still clears the link
+            # and files the report.
+            discard = self.keep_connection and (
+                isinstance(outcome, (WriteTimeout, SessionDropped))
+                or (session is not None and session.discard_link)
+            )
+            try:
+                if discard:
+                    await self.disconnect()
+            finally:
+                if self.client is not None and (
+                    discard or not self.keep_connection or not self.client.is_connected
+                ):
+                    self.client = None
+                    self._notify_connection()
+                if session is None or not session.defer_commit or outcome is not None:
+                    self._commit_session(operation, trace, outcome)
 
     def _commit_session(
         self, operation: str, trace: SessionTrace, outcome: BaseException | None
@@ -346,9 +353,10 @@ class CatPrinterDevice:
                     await self.client.disconnect()
             except Exception:  # noqa: BLE001
                 _LOGGER.debug("Disconnect failed", exc_info=True)
-                # Do not reuse a link that would not close; connect afresh.
+            finally:
+                # Closed or not, do not reuse this link; connect afresh.
                 self.client = None
-            self._notify_connection()
+                self._notify_connection()
 
     # ------------------------------------------------------------------
     # polling
@@ -516,7 +524,9 @@ class CatPrinterDevice:
                 try:
                     with trace.timed("query_state"):
                         await printer.query_state(required=False)
-                except (BleSessionError, BleakError, RuntimeError):
+                except (BleSessionError, BleakError, RuntimeError) as err:
                     # The paper has moved; a lost status read is not a failed feed.
                     trace.forgive("query_state")
+                    if isinstance(err, (WriteTimeout, SessionDropped)):
+                        session.discard_link = True
                     _LOGGER.debug("Status read after feed failed", exc_info=True)
