@@ -58,6 +58,10 @@ _LOGGER = logging.getLogger(__name__)
 #: traceback: session errors, bleak connection/GATT errors, a backend timeout.
 _EXPECTED_ERRORS = (BleSessionError, BleakError, TimeoutError, RuntimeError)
 
+#: How long unloading waits for a running operation before giving up on closing
+#: its link.
+UNLOAD_WAIT_S = 30.0
+
 
 def _option(entry: ConfigEntry, key: str, default):
     return entry.options.get(key, entry.data.get(key, default))
@@ -249,7 +253,9 @@ async def _print_on_entry(hass: HomeAssistant, entry_id: str, service: ServiceCa
 
 
 async def _feed_on_entry(hass: HomeAssistant, entry_id: str, dots: int) -> None:
-    device: CatPrinterDevice = hass.data[DOMAIN][entry_id]["device"]
+    entry_data = hass.data[DOMAIN][entry_id]
+    coordinator: DataUpdateCoordinator[BLEData] = entry_data["coordinator"]
+    device: CatPrinterDevice = entry_data["device"]
     ble_device = _ble_device_for(hass, device)
     lock: asyncio.Lock = hass.data[PRINT_LOCK]
     async with lock:
@@ -257,6 +263,9 @@ async def _feed_on_entry(hass: HomeAssistant, entry_id: str, dots: int) -> None:
             await device.feed(ble_device, dots)
         except _EXPECTED_ERRORS as err:
             raise HomeAssistantError(f"Failed to feed: {err}") from err
+        finally:
+            # The feed reads the status afterwards; show it like a print does.
+            coordinator.async_set_updated_data(device.ble_data)
 
 
 def _as_id_list(value) -> list[str]:
@@ -309,7 +318,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     entry_data = hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
     if entry_data and (device := entry_data.get("device")):
-        await device.disconnect()
+        # An operation already running read keep_connection when it started and
+        # may leave its link up. Wait for it (bounded), then close that link, so
+        # an unloaded entry does not keep holding a proxy connection slot.
+        device.keep_connection = False
+        with contextlib.suppress(TimeoutError):
+            async with asyncio.timeout(UNLOAD_WAIT_S):
+                async with device.lock:
+                    await device.disconnect()
 
     if not hass.data.get(DOMAIN):
         for name in ("print", "feed"):

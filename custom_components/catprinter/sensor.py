@@ -254,6 +254,7 @@ class CatPrinterErrorCountSensor(_SessionReportSensor):
 
     _key = "error_count"
     _attr_translation_key = "error_count"
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_icon = "mdi:alert-circle-outline"
 
     @property
