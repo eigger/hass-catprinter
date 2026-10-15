@@ -14,6 +14,14 @@ from collections.abc import Callable
 from time import monotonic
 
 from bleak import BleakClient
+from blesession import (
+    WRITE_TIMEOUT_S,
+    NotificationTimeout,
+    WriteTimeout,
+    guarded_write,
+    start_notify_with_recovery,
+    stop_notify_best_effort,
+)
 
 from .errors import CatPrinterError, ErrorCode, PrinterError
 from .models import SERVICE_CANDIDATES, DeviceProfile
@@ -36,6 +44,10 @@ from .protocol import (
 _LOGGER = logging.getLogger(__name__)
 
 QUERY_TIMEOUT = 5.0
+#: Bound on the best-effort ``A6 05`` that follows a stalled job.
+ABORT_WRITE_TIMEOUT = 5.0
+#: Bound on one chunk write; a proxy that stops taking data would otherwise hang.
+WRITE_TIMEOUT = WRITE_TIMEOUT_S
 #: How long to sit on a "buffer full" before giving the job up. A full buffer
 #: prints in a few seconds; staying full this long means the printer has
 #: stopped feeding (paper out, cover open) and pushing more bytes would only
@@ -119,16 +131,13 @@ class CatPrinterClient:
         self._parser = FrameParser()
         self._flow_ok.set()
         if self._notify_uuid:
-            await self._client.start_notify(self._notify_uuid, self._on_notify)
+            await start_notify_with_recovery(self._client, self._notify_uuid, self._on_notify)
 
     async def stop(self) -> None:
         """Unsubscribe. Safe to call more than once, and after a failed start."""
         uuid, self._notify_uuid = self._notify_uuid, None
-        if uuid and self._client.is_connected:
-            try:
-                await self._client.stop_notify(uuid)
-            except Exception:  # noqa: BLE001 - teardown must not mask the real error
-                _LOGGER.debug("stop_notify(%s) failed", uuid, exc_info=True)
+        if uuid:
+            await stop_notify_best_effort(self._client, uuid)
         for future in self._pending.values():
             if not future.done():
                 future.cancel()
@@ -146,8 +155,13 @@ class CatPrinterClient:
     # writing
     # ------------------------------------------------------------------
 
-    async def send(self, data: bytes, on_progress: ProgressFn | None = None) -> None:
-        """Push ``data`` in packet-sized chunks, honouring flow control."""
+    async def send(
+        self, data: bytes, on_progress: ProgressFn | None = None, *, step: str = "raster"
+    ) -> None:
+        """Push ``data`` in packet-sized chunks, honouring flow control.
+
+        ``step`` names the stage in a ``SessionDropped`` / ``WriteTimeout``.
+        """
         assert self._write_uuid is not None
         total = len(data)
         sent = 0
@@ -163,7 +177,14 @@ class CatPrinterClient:
                         f"for {FLOW_RESUME_TIMEOUT:.0f}s",
                     ) from None
             chunk = data[sent : sent + self._packet_size]
-            await self._client.write_gatt_char(self._write_uuid, chunk, response=False)
+            await guarded_write(
+                self._client,
+                self._write_uuid,
+                chunk,
+                step=step,
+                response=False,
+                timeout=WRITE_TIMEOUT,
+            )
             sent += len(chunk)
             if on_progress:
                 on_progress(sent, total)
@@ -189,6 +210,8 @@ class CatPrinterClient:
                 if err.code == ErrorCode.STALLED:
                     await self._abort()
                 raise
+            except WriteTimeout:
+                raise  # the transport stopped taking data; an abort would hang too
             deadline = monotonic() + timeout
             while True:
                 if waiter.done():
@@ -217,31 +240,43 @@ class CatPrinterClient:
         if not self._client.is_connected or self._write_uuid is None:
             return
         try:
-            await self._client.write_gatt_char(self._write_uuid, cmd_stop(), response=False)
+            await guarded_write(
+                self._client,
+                self._write_uuid,
+                cmd_stop(),
+                step="abort",
+                response=False,
+                timeout=ABORT_WRITE_TIMEOUT,
+            )
         except Exception:  # noqa: BLE001 - the job is already lost
             _LOGGER.debug("Abort command failed", exc_info=True)
 
     async def feed(self, dots: int, step: int = 48) -> None:
-        await self.send(feed_sequence(dots, step))
+        await self.send(feed_sequence(dots, step), step="feed")
 
     # ------------------------------------------------------------------
     # queries
     # ------------------------------------------------------------------
 
-    async def query_state(self) -> DeviceState | None:
-        frame = await self._query(CMD_GET_STATE, cmd_get_state())
-        return frame
+    async def query_state(self, *, required: bool = True) -> DeviceState | None:
+        """Ask for the status. A silent printer raises ``NotificationTimeout``
+        unless ``required`` is False, which returns None instead."""
+        return await self._query(CMD_GET_STATE, cmd_get_state(), "query_state", required)
 
-    async def query_info(self) -> DeviceInfo | None:
-        return await self._query(CMD_GET_INFO, cmd_get_info())
+    async def query_info(self, *, required: bool = True) -> DeviceInfo | None:
+        return await self._query(CMD_GET_INFO, cmd_get_info(), "query_info", required)
 
-    async def _query(self, cmd: int, packet: bytes):
+    async def _query(self, cmd: int, packet: bytes, step: str, required: bool):
         waiter = self._add_waiter(cmd)
         try:
-            await self.send(packet)
+            await self.send(packet, step=step)
             return await asyncio.wait_for(waiter, QUERY_TIMEOUT)
+        except WriteTimeout:
+            raise  # a hung write is not a missing reply
         except TimeoutError:
             _LOGGER.debug("No reply to %02X within %.0fs", cmd, QUERY_TIMEOUT)
+            if required:
+                raise NotificationTimeout(QUERY_TIMEOUT, step=step) from None
             return None
         finally:
             self._drop_waiter(cmd, waiter)

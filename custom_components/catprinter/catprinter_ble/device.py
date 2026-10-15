@@ -13,9 +13,10 @@ import time
 from collections.abc import Callable
 
 from bleak import BleakClient
+from bleak.exc import BleakError
 from bleak.backends.device import BLEDevice
 from bleak_retry_connector import establish_connection
-from blesession import is_proxy
+from blesession import DISCONNECT_TIMEOUT_S, BleSessionError, WriteTimeout, is_proxy
 from PIL import Image
 
 from .client import CatPrinterClient
@@ -216,9 +217,13 @@ class CatPrinterDevice:
     async def disconnect(self) -> None:
         if self.client and self.client.is_connected:
             try:
-                await self.client.disconnect()
+                # A proxy that stopped answering must not hold the locks.
+                async with asyncio.timeout(DISCONNECT_TIMEOUT_S):
+                    await self.client.disconnect()
             except Exception:  # noqa: BLE001
                 _LOGGER.debug("Disconnect failed", exc_info=True)
+                # Do not reuse a link that would not close; connect afresh.
+                self.client = None
             self._notify_connection()
 
     # ------------------------------------------------------------------
@@ -241,7 +246,7 @@ class CatPrinterDevice:
             try:
                 await printer.start()
                 if not self.ble_data.sw_version:
-                    info = await printer.query_info()
+                    info = await printer.query_info(required=False)
                     if info is not None:
                         self.ble_data.device_type = info.device_type
                         self.ble_data.sw_version = info.firmware
@@ -305,13 +310,16 @@ class CatPrinterDevice:
                 # Ask before sending: a fault now means the raster would only
                 # be discarded, and the error surfaces immediately instead of
                 # after the whole job has been pushed.
-                state = await printer.query_state()
+                state = await printer.query_state(required=False)
                 if state is not None and state.fault:
                     raise PrinterError(state.fault)
                 try:
                     await printer.print_job(job, bitmap.height * copies, on_progress)
-                except CatPrinterError as err:
-                    if err.code not in (ErrorCode.STALLED, ErrorCode.TIMEOUT):
+                except (CatPrinterError, WriteTimeout) as err:
+                    if isinstance(err, CatPrinterError) and err.code not in (
+                        ErrorCode.STALLED,
+                        ErrorCode.TIMEOUT,
+                    ):
                         raise
                     # The printer went quiet mid-job. It does not push status
                     # on its own, and a stalled command queue does not answer
@@ -349,7 +357,7 @@ class CatPrinterDevice:
             printer = self._make_client(client, self.profile)  # type: ignore[arg-type]
             try:
                 await printer.start()
-                state = await printer.query_state()
+                state = await printer.query_state(required=False)
             finally:
                 await printer.stop()
         except Exception:  # noqa: BLE001 - diagnosis is best effort
@@ -366,7 +374,11 @@ class CatPrinterDevice:
             try:
                 await printer.start()
                 await printer.feed(dots, profile.feed_step)
-                await printer.query_state()
+                try:
+                    await printer.query_state(required=False)
+                except (BleSessionError, BleakError, RuntimeError):
+                    # The paper has moved; a lost status read is not a failed feed.
+                    _LOGGER.debug("Status read after feed failed", exc_info=True)
             finally:
                 await printer.stop()
                 if not self.keep_connection:
