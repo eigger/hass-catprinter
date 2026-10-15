@@ -10,7 +10,6 @@ from __future__ import annotations
 import dataclasses
 import logging
 
-from homeassistant import config_entries
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -24,7 +23,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .const import DOMAIN
+from .data import CatPrinterConfigEntry
 from .entity import build_device_info, device_name
 from .catprinter_ble import BLEData, CatPrinterDevice
 
@@ -77,13 +76,12 @@ STATUS_SENSORS: tuple[StatusBinarySensorEntityDescription, ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: config_entries.ConfigEntry,
+    entry: CatPrinterConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up CatPrinter binary sensors."""
-    data = hass.data[DOMAIN][entry.entry_id]
-    coordinator: DataUpdateCoordinator[BLEData] = data["coordinator"]
-    device: CatPrinterDevice = data["device"]
+    coordinator = entry.runtime_data.coordinator
+    device = entry.runtime_data.device
 
     entities: list[BinarySensorEntity] = [
         CatPrinterConnectionBinarySensor(coordinator, device),

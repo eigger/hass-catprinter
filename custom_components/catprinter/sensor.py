@@ -6,7 +6,6 @@ import logging
 from collections.abc import Callable
 from datetime import timedelta
 
-from homeassistant import config_entries
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -23,7 +22,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .const import DOMAIN
+from .data import CatPrinterConfigEntry
 from .entity import build_device_info, device_name
 from .catprinter_ble import BLEData, CatPrinterDevice
 
@@ -63,13 +62,12 @@ SENSORS: dict[str, SensorEntityDescription] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: config_entries.ConfigEntry,
+    entry: CatPrinterConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up CatPrinter sensors."""
-    data = hass.data[DOMAIN][entry.entry_id]
-    coordinator: DataUpdateCoordinator[BLEData] = data["coordinator"]
-    device: CatPrinterDevice = data["device"]
+    coordinator = entry.runtime_data.coordinator
+    device = entry.runtime_data.device
 
     entities: list[SensorEntity] = [
         CatPrinterSensor(coordinator, description)
