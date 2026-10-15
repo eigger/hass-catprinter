@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import io
 import logging
 from datetime import timedelta
@@ -118,12 +119,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             # A print (or feed) holds this device, or another printer's job
             # holds the adapter / proxy slots. A print refreshes status itself
             # via the trailing A3, so queueing a connection behind it only adds
-            # a reconnect right after the job.
+            # a reconnect right after the job. The lock is only looked at, not
+            # taken: a printer that is off would hold it through the whole
+            # connect attempt and stall every other printer's prints.
             _LOGGER.debug("Printer %s or the adapter is busy; skipping this poll", address)
+            with contextlib.suppress(*_EXPECTED_ERRORS):
+                device.prepare(ble_device)  # names the entities without a connection
             return device.ble_data
         try:
-            async with print_lock:
-                return await device.update_device(ble_device)
+            return await device.update_device(ble_device)
         except Exception as err:  # noqa: BLE001 - never let polling kill the entry
             _LOGGER.warning("Unable to poll %s: %s; keeping last known data", address, err)
             return device.ble_data

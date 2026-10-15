@@ -337,14 +337,23 @@ class CatPrinterDevice:
     # polling
     # ------------------------------------------------------------------
 
+    def prepare(self, ble_device: BLEDevice) -> DeviceProfile:
+        """Resolve the model and fill in name / address from the advertisement.
+
+        Needs no connection, so a poll that is skipped because the adapter is
+        busy still gives the entities their name.
+        """
+        profile = self._resolve_profile(ble_device)
+        if not self.ble_data.name or self.ble_data.name == "Cat Printer":
+            self.ble_data.name = ble_device.name or profile.model_id
+        if not self.ble_data.address:
+            self.ble_data.address = ble_device.address
+        return profile
+
     async def update_device(self, ble_device: BLEDevice) -> BLEData:
         """Refresh the BLEData snapshot."""
         async with self.lock:
-            profile = self._resolve_profile(ble_device)
-            if not self.ble_data.name or self.ble_data.name == "Cat Printer":
-                self.ble_data.name = ble_device.name or profile.model_id
-            if not self.ble_data.address:
-                self.ble_data.address = ble_device.address
+            self.prepare(ble_device)
 
             async with self._operation(ble_device, "poll") as session:
                 printer, trace = session.printer, session.trace
@@ -384,28 +393,35 @@ class CatPrinterDevice:
             self._print_end = None
             self._notify_printing()
             stalled: BaseException | None = None
-            trace: SessionTrace | None = None
             try:
+                try:
+                    profile = self._resolve_profile(ble_device)
+                except CatPrinterError as err:
+                    # Nothing to connect to, but the failure still belongs on
+                    # the diagnostic sensors.
+                    self._commit_session("print", SessionTrace(stage_map=STAGE_MAP), err)
+                    raise
+                fitted = fit_to_printhead(image, profile.printhead_px)
+                bitmap = to_raster(fitted)
+                params = JobParams(
+                    mode=mode,
+                    energy=energy if energy is not None else profile.energy_for(mode, density),
+                    speed=speed if speed is not None else profile.speed_for(mode),
+                    feed_dots=feed_dots if feed_dots is not None else profile.default_feed_dots,
+                    feed_step=profile.feed_step,
+                    copies=copies,
+                )
+                rows = [bitmap.row(i) for i in range(bitmap.height)]
+                job = build_print_job(rows, bitmap.width, params)
+                _LOGGER.debug(
+                    "Print %dx%d mode=%s energy=%s speed=%d feed=%d copies=%d -> %d bytes",
+                    bitmap.width, bitmap.height, params.mode, params.energy,
+                    params.speed, params.feed_dots, copies, len(job),
+                )
+
                 async with self._operation(ble_device, "print") as session:
-                    printer, trace, profile = session.printer, session.trace, session.profile
-                    fitted = fit_to_printhead(image, profile.printhead_px)
-                    bitmap = to_raster(fitted)
-                    params = JobParams(
-                        mode=mode,
-                        energy=energy if energy is not None else profile.energy_for(mode, density),
-                        speed=speed if speed is not None else profile.speed_for(mode),
-                        feed_dots=feed_dots if feed_dots is not None else profile.default_feed_dots,
-                        feed_step=profile.feed_step,
-                        copies=copies,
-                    )
-                    rows = [bitmap.row(i) for i in range(bitmap.height)]
-                    job = build_print_job(rows, bitmap.width, params)
+                    printer, trace = session.printer, session.trace
                     trace.note(width=bitmap.width, height=bitmap.height, job_bytes=len(job))
-                    _LOGGER.debug(
-                        "Print %dx%d mode=%s energy=%s speed=%d feed=%d copies=%d -> %d bytes",
-                        bitmap.width, bitmap.height, params.mode, params.energy,
-                        params.speed, params.feed_dots, copies, len(job),
-                    )
 
                     # Ask before sending: a fault now means the raster would only
                     # be discarded, and the error surfaces immediately instead of
@@ -432,6 +448,7 @@ class CatPrinterDevice:
 
                 if stalled is not None:
                     outcome: BaseException = stalled
+                    # A cancel during the diagnosis still reports: the stall happened.
                     try:
                         fault = await self._diagnose(ble_device)
                         if fault:

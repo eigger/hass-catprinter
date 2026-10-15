@@ -450,3 +450,37 @@ def test_keep_connection_reuses_the_link(monkeypatch):
     asyncio.run(run())
     assert connects["n"] == 1
     assert fake.disconnects == 0
+
+
+def test_successful_print_is_reported_once_and_connection_listeners_fire(monkeypatch):
+    from PIL import Image
+
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    reports = []
+    dev.callback_session = lambda op, trace, outcome: reports.append((op, outcome))
+    events = []
+    dev.add_connection_listener(lambda: events.append(dev.is_connected))
+    orig = fake.write_gatt_char
+
+    async def write(uuid, data, response=False):
+        await orig(uuid, data, response)
+        if bytes(data) == p.cmd_get_state():
+            fake.push(reply(0xA3, bytes.fromhex("00 0d 27")))
+        elif bytes(data).endswith(b"\xff") and len(data) > 8:
+            fake.push(reply(0xA3, bytes.fromhex("00 0d 27")))
+
+    fake.write_gatt_char = write
+    result = asyncio.run(dev.print_image(ble, Image.new("1", (384, 8))))
+    assert result["status"] == "ok"
+    assert reports == [("print", None)]
+    assert events == [True, False]
+
+
+def test_prepare_names_the_printer_without_connecting(monkeypatch):
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    dev.prepare(ble)
+    assert dev.ble_data.name == "X6h-0000"
+    assert dev.ble_data.model_id
