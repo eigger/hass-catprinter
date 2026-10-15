@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components.image import Image, ImageEntity, ImageEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
@@ -15,7 +14,8 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.util import dt as dt_util
 from propcache.api import cached_property
 
-from .const import DOMAIN, ImageAndBLEData
+from .const import ImageAndBLEData
+from .data import CatPrinterConfigEntry
 from .entity import build_device_info
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,12 +23,12 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: CatPrinterConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the CatPrinter image entity."""
     assert config_entry.unique_id
-    image_coordinator = hass.data[DOMAIN][config_entry.entry_id]["image_coordinator"]
+    image_coordinator = config_entry.runtime_data.image_coordinator
     description = ImageEntityDescription(
         key="last_print",
         translation_key="last_print",

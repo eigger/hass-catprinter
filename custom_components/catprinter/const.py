@@ -10,8 +10,7 @@ from .catprinter_ble import BLEData
 
 DOMAIN = "catprinter"
 
-#: Domain-wide print lock, kept outside ``hass.data[DOMAIN]`` so that dict stays
-#: a clean entry_id -> runtime mapping.
+#: ``hass.data`` key of the domain-wide print lock (see ``data.get_print_lock``).
 PRINT_LOCK = f"{DOMAIN}_print_lock"
 
 #: Model chosen by hand when a printer's advertised name matches no profile.
