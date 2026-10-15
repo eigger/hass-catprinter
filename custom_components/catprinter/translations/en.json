@@ -74,6 +74,12 @@
       },
       "print_duration": {
         "name": "Print duration"
+      },
+      "last_failure": {
+        "name": "Last failure"
+      },
+      "error_count": {
+        "name": "Error count"
       }
     },
     "binary_sensor": {

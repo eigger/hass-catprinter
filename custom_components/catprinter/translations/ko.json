@@ -74,6 +74,12 @@
       },
       "print_duration": {
         "name": "인쇄 시간"
+      },
+      "last_failure": {
+        "name": "마지막 실패"
+      },
+      "error_count": {
+        "name": "오류 횟수"
       }
     },
     "binary_sensor": {

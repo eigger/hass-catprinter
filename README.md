@@ -59,7 +59,9 @@ one central can be connected at a time.
 | `image.*_last_print` | | what was last rendered |
 | `sensor.*_battery` | diagnostic | `A3` reply, decoded per the model's battery scheme |
 | `sensor.*_conditions` | diagnostic | every active status bit, comma-separated |
-| `sensor.*_print_duration` | diagnostic | last / current job |
+| `sensor.*_print_duration` | diagnostic | last / current job; attributes carry the last print's BLE session breakdown (radio, per-stage timings, `likely_cause` on failure) |
+| `sensor.*_last_failure` | diagnostic | when a BLE session last failed; attributes explain it (`failed_stage`, `error`, `likely_cause`, radio) and are kept until the next failure |
+| `sensor.*_error_count` | diagnostic | failed sessions since the entry was loaded (a status poll that cannot reach a sleeping printer is not counted) |
 | `sensor.*_label_sensor` | diagnostic, disabled by default | raw label sensor byte |
 | `binary_sensor.*_low_battery`, `charging` | diagnostic | status bits |
 | `binary_sensor.*_connection` | diagnostic | live |
