@@ -22,15 +22,20 @@ class ErrorCode(StrEnum):
 
 #: Codes a retry cannot change: the model or firmware is what it is.
 _NOT_RETRYABLE = frozenset(
-    {ErrorCode.UNKNOWN_DEVICE, ErrorCode.UNSUPPORTED_DEVICE, ErrorCode.SERVICE_NOT_FOUND}
+    {
+        ErrorCode.UNKNOWN_DEVICE,
+        ErrorCode.UNSUPPORTED_DEVICE,
+        ErrorCode.SERVICE_NOT_FOUND,
+        ErrorCode.PRINTER_ERROR,
+    }
 )
 
 
 class CatPrinterError(BleSessionError):
     """Base error raised by the protocol layer.
 
-    A ``BleSessionError`` is a ``ConnectionError``, so Home Assistant callers
-    can map every expected failure with a single ``except``.
+    A ``BleSessionError`` is a ``ConnectionError``; failures raised by the
+    connection layer itself (bleak) are not, so callers still catch both.
     """
 
     def __init__(self, code: ErrorCode, message: str) -> None:
@@ -43,8 +48,6 @@ class PrinterError(CatPrinterError, DeviceError):
 
     def __init__(self, status: str, raw: bytes = b"") -> None:
         super().__init__(ErrorCode.PRINTER_ERROR, f"Printer error: {status}")
-        # A printer fault (cover open, no paper) does not clear by retrying.
-        self.retryable = False
         self.status = status
         self.raw = raw
 
