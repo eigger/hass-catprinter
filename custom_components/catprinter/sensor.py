@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import timedelta
 
 from homeassistant import config_entries
@@ -76,6 +77,8 @@ async def async_setup_entry(
         if key in coordinator.data.sensors
     ]
     entities.append(CatPrinterPrintDurationSensor(coordinator, device))
+    entities.append(CatPrinterLastFailureSensor(coordinator, device))
+    entities.append(CatPrinterErrorCountSensor(coordinator, device))
 
     async_add_entities(entities)
 
@@ -168,8 +171,91 @@ class CatPrinterPrintDurationSensor(
 
     @property
     def extra_state_attributes(self) -> dict:
+        """Elapsed time, plus the last print's BLE session breakdown.
+
+        The breakdown (outcome, radio, per-stage timings, likely_cause on
+        failure) is left out while a job runs so the ticking state is not
+        paired with the previous job.
+        """
         duration = self._device.print_duration
-        return {
+        attrs: dict = {
             "formatted": f"{int(duration // 60):02d}:{int(duration % 60):02d}",
             "is_printing": self._device.is_printing,
         }
+        report = self._device.reports.of("print")
+        if not self._device.is_printing and report:
+            attrs.update(report)
+        return attrs
+
+
+class _SessionReportSensor(CoordinatorEntity[DataUpdateCoordinator[BLEData]], SensorEntity):
+    """Base for sensors that follow ``device.reports`` rather than the poll."""
+
+    _attr_has_entity_name = True
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _key: str
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator[BLEData],
+        device: CatPrinterDevice,
+    ) -> None:
+        super().__init__(coordinator)
+        self._device = device
+        self._remove_listener: Callable[[], None] = lambda: None
+        ble_data = coordinator.data
+        self._attr_unique_id = f"{device_name(ble_data)}_{self._key}"
+        self._attr_device_info = build_device_info(ble_data)
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._remove_listener = self._device.reports.add_listener(self._handle_report)
+
+    async def async_will_remove_from_hass(self) -> None:
+        await super().async_will_remove_from_hass()
+        self._remove_listener()
+        self._remove_listener = lambda: None
+
+    @callback
+    def _handle_report(self) -> None:
+        self.async_write_ha_state()
+
+
+class CatPrinterLastFailureSensor(_SessionReportSensor):
+    """When a BLE session last failed, with that session's breakdown.
+
+    Kept until the next failure so a later success does not erase the
+    evidence. A status poll that never connects is left out: the printer is
+    often off or asleep, and counting it would replace the last real failure
+    on every scan.
+    """
+
+    _key = "last_failure"
+    _attr_translation_key = "last_failure"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_icon = "mdi:clock-alert-outline"
+
+    @property
+    def native_value(self):
+        return self._device.reports.last_failure_at
+
+    @property
+    def extra_state_attributes(self) -> dict | None:
+        return self._device.reports.last_failure
+
+
+class CatPrinterErrorCountSensor(_SessionReportSensor):
+    """How many BLE sessions have failed since this entry was loaded.
+
+    Starts over on every reload, so it is not a long-term statistic. A poll
+    that fails before the link is up is not counted; a print failure, or a
+    poll that connected and then failed, is.
+    """
+
+    _key = "error_count"
+    _attr_translation_key = "error_count"
+    _attr_icon = "mdi:alert-circle-outline"
+
+    @property
+    def native_value(self) -> int:
+        return self._device.reports.failures
