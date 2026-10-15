@@ -231,6 +231,9 @@ class CatPrinterDevice:
         trace = SessionTrace(stage_map=STAGE_MAP)
         outcome: BaseException | None = None
         session: _Session | None = None
+        # Read once: ble_session decides on it when it starts, and the cleanup
+        # below must agree even if the option is switched off meanwhile.
+        keep = self.keep_connection
         try:
             profile = self._resolve_profile(ble_device)
             async with ble_session(
@@ -238,7 +241,7 @@ class CatPrinterDevice:
                 trace=trace,
                 name=ble_device.address,
                 client=self.client,
-                keep=self.keep_connection,
+                keep=keep,
                 **{"use_services_cache": False, **connect_kwargs},
             ) as client:
                 if client is not self.client:
@@ -266,7 +269,7 @@ class CatPrinterDevice:
             # the same way, so a kept link is closed and the next job connects
             # afresh. Nested so a cancel while closing still clears the link
             # and files the report.
-            discard = self.keep_connection and (
+            discard = keep and (
                 isinstance(outcome, (WriteTimeout, SessionDropped))
                 or (session is not None and session.discard_link)
             )
@@ -275,7 +278,7 @@ class CatPrinterDevice:
                     await self.disconnect()
             finally:
                 if self.client is not None and (
-                    discard or not self.keep_connection or not self.client.is_connected
+                    discard or not keep or not self.client.is_connected
                 ):
                     self.client = None
                     self._notify_connection()

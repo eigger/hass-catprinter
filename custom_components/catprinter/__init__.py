@@ -311,6 +311,11 @@ def _resolve_target_entry_ids(hass: HomeAssistant, service: ServiceCall) -> list
     )
 
 
+async def _close_when_idle(device: CatPrinterDevice) -> None:
+    async with device.lock:
+        await device.disconnect()
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
@@ -322,10 +327,18 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # may leave its link up. Wait for it (bounded), then close that link, so
         # an unloaded entry does not keep holding a proxy connection slot.
         device.keep_connection = False
-        with contextlib.suppress(TimeoutError):
+        try:
             async with asyncio.timeout(UNLOAD_WAIT_S):
                 async with device.lock:
                     await device.disconnect()
+        except TimeoutError:
+            _LOGGER.warning(
+                "An operation on %s is still running; its link will be closed when it ends",
+                entry.title,
+            )
+            entry.async_create_background_task(
+                hass, _close_when_idle(device), f"{DOMAIN}_close_{entry.entry_id}"
+            )
 
     if not hass.data.get(DOMAIN):
         for name in ("print", "feed"):

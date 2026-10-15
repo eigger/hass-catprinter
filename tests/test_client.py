@@ -641,3 +641,21 @@ def test_stop_failing_after_a_stall_is_reported_once(monkeypatch):
 
     asyncio.run(run())
     assert len(reports) == 1 and isinstance(reports[0][1], RuntimeError)
+
+
+def test_switching_keep_connection_off_mid_operation_still_leaves_a_closable_link(monkeypatch):
+    """Unload flips the option while a job runs; the link must stay reachable."""
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    dev.keep_connection = True
+
+    async def run():
+        async with dev._operation(ble, "feed"):
+            dev.keep_connection = False
+        assert dev.client is fake  # ble_session kept it open, so we still hold it
+        await dev.disconnect()
+
+    asyncio.run(run())
+    assert fake.disconnects == 1
+    assert dev.client is None
