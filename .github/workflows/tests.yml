@@ -48,18 +48,24 @@ jobs:
           pip install pytest pytest-asyncio bleak
           python -c "import json; print('\n'.join(json.load(open('custom_components/catprinter/manifest.json'))['requirements']))" > requirements.txt
           pip install -r requirements.txt
-          # Exercise the minimum imagespec version declared by the manifest.
-          IMAGESPEC_MIN_VERSION="$(python - <<'PY'
+          # Exercise the minimum version of every requirement the manifest declares.
+          python - <<'PY' > requirements_min.txt
           import json
+          import re
           requirements = json.load(open("custom_components/catprinter/manifest.json"))["requirements"]
-          requirement = next(req for req in requirements if req.startswith("imagespec[datamatrix]"))
-          operator, version = requirement.rsplit(">=", 1)
-          assert operator == "imagespec[datamatrix]", requirement
-          print(version)
+          for requirement in requirements:
+              match = re.fullmatch(r"([A-Za-z0-9_.-]+(?:\[[^\]]*\])?)>=([0-9][0-9.]*)", requirement)
+              assert match, f"unsupported requirement form: {requirement}"
+              print(f"{match.group(1)}=={match.group(2)}")
           PY
-          )"
-          pip install --force-reinstall "imagespec[datamatrix]==${IMAGESPEC_MIN_VERSION}"
-          IMAGESPEC_MIN_VERSION="$IMAGESPEC_MIN_VERSION" python -c "from importlib.metadata import version; import os; assert version('imagespec') == os.environ['IMAGESPEC_MIN_VERSION']"
+          pip install --force-reinstall -r requirements_min.txt
+          python - <<'PY'
+          from importlib.metadata import version
+          for line in open("requirements_min.txt").read().split():
+              name, expected = line.split("==")
+              name = name.split("[")[0]
+              assert version(name) == expected, (name, version(name), expected)
+          PY
 
       - name: Run tests
         run: |
