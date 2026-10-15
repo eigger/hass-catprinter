@@ -6,6 +6,7 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
+from blesession import NotificationTimeout, WriteTimeout
 
 from catprinter_ble import client as client_mod
 from catprinter_ble import protocol as p
@@ -184,3 +185,46 @@ def test_proxy_detection_and_pacing():
     dev._interval_ms = 50  # explicit user value wins over the proxy default
     c = dev._make_client(fake, dev.profile)
     assert c._interval == 0.05
+
+
+def test_silent_query_raises_notification_timeout(printer, monkeypatch):
+    fake, c = printer
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+
+    async def run():
+        await c.start()
+        await c.query_state()
+
+    with pytest.raises(NotificationTimeout) as exc:
+        asyncio.run(run())
+    assert exc.value.step == "query_state"
+
+
+def test_optional_query_returns_none_when_silent(printer, monkeypatch):
+    fake, c = printer
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+
+    async def run():
+        await c.start()
+        return await c.query_state(required=False)
+
+    assert asyncio.run(run()) is None
+
+
+def test_hung_write_is_a_write_timeout_not_a_silent_query(printer, monkeypatch):
+    """A write that never returns must not be mistaken for a missing reply."""
+    fake, c = printer
+    monkeypatch.setattr(client_mod, "WRITE_TIMEOUT", 0.05)
+
+    async def hang(uuid, data, response=False):
+        await asyncio.sleep(10)
+
+    fake.write_gatt_char = hang
+
+    async def run():
+        await c.start()
+        await c.query_state(required=False)
+
+    with pytest.raises(WriteTimeout) as exc:
+        asyncio.run(run())
+    assert exc.value.step == "query_state"

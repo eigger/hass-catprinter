@@ -15,7 +15,7 @@ from collections.abc import Callable
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak_retry_connector import establish_connection
-from blesession import is_proxy
+from blesession import WriteTimeout, is_proxy
 from PIL import Image
 
 from .client import CatPrinterClient
@@ -305,13 +305,16 @@ class CatPrinterDevice:
                 # Ask before sending: a fault now means the raster would only
                 # be discarded, and the error surfaces immediately instead of
                 # after the whole job has been pushed.
-                state = await printer.query_state()
+                state = await printer.query_state(required=False)
                 if state is not None and state.fault:
                     raise PrinterError(state.fault)
                 try:
                     await printer.print_job(job, bitmap.height * copies, on_progress)
-                except CatPrinterError as err:
-                    if err.code not in (ErrorCode.STALLED, ErrorCode.TIMEOUT):
+                except (CatPrinterError, WriteTimeout) as err:
+                    if isinstance(err, CatPrinterError) and err.code not in (
+                        ErrorCode.STALLED,
+                        ErrorCode.TIMEOUT,
+                    ):
                         raise
                     # The printer went quiet mid-job. It does not push status
                     # on its own, and a stalled command queue does not answer
@@ -349,7 +352,7 @@ class CatPrinterDevice:
             printer = self._make_client(client, self.profile)  # type: ignore[arg-type]
             try:
                 await printer.start()
-                state = await printer.query_state()
+                state = await printer.query_state(required=False)
             finally:
                 await printer.stop()
         except Exception:  # noqa: BLE001 - diagnosis is best effort
@@ -366,7 +369,7 @@ class CatPrinterDevice:
             try:
                 await printer.start()
                 await printer.feed(dots, profile.feed_step)
-                await printer.query_state()
+                await printer.query_state(required=False)
             finally:
                 await printer.stop()
                 if not self.keep_connection:

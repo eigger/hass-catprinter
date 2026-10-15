@@ -9,6 +9,7 @@ import logging
 from datetime import timedelta
 
 from bleak_retry_connector import close_stale_connections_by_address
+from blesession import BleSessionError
 from homeassistant.components import bluetooth
 from homeassistant.components.image import Image
 from homeassistant.config_entries import ConfigEntry
@@ -28,7 +29,7 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .catprinter_ble import BLEData, CatPrinterDevice, CatPrinterError
+from .catprinter_ble import BLEData, CatPrinterDevice
 from .const import (
     CONF_INTERVAL_MS,
     CONF_KEEP_CONNECTION,
@@ -203,7 +204,7 @@ async def _print_on_entry(hass: HomeAssistant, entry_id: str, service: ServiceCa
                 feed_dots=int(data["feed"]) if "feed" in data else None,
                 copies=int(data.get("copies", 1)),
             )
-        except (CatPrinterError, RuntimeError) as err:
+        except (BleSessionError, RuntimeError) as err:
             raise HomeAssistantError(f"Failed to print: {err}") from err
         finally:
             # The job (or its failure diagnosis) refreshed the status; show it
@@ -221,7 +222,7 @@ async def _feed_on_entry(hass: HomeAssistant, entry_id: str, dots: int) -> None:
     async with lock:
         try:
             await device.feed(ble_device, dots)
-        except (CatPrinterError, RuntimeError) as err:
+        except (BleSessionError, RuntimeError) as err:
             raise HomeAssistantError(f"Failed to feed: {err}") from err
 
 
