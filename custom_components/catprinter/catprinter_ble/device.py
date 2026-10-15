@@ -15,6 +15,7 @@ from collections.abc import Callable
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak_retry_connector import establish_connection
+from blesession import is_proxy
 from PIL import Image
 
 from .client import CatPrinterClient
@@ -38,17 +39,6 @@ _LOGGER = logging.getLogger(__name__)
 #: bands or a truncated print.
 PROXY_INTERVAL_MS = 20
 PROXY_PACKET_SIZE = 100
-
-
-def via_proxy(ble_device: BLEDevice) -> bool:
-    """True when Home Assistant reached this device through a remote scanner.
-
-    Local adapters carry backend-specific details (a BlueZ object path, a
-    WinRT/CoreBluetooth handle); remote ESPHome scanners publish a plain dict
-    with the proxy's ``source`` address.
-    """
-    details = getattr(ble_device, "details", None)
-    return isinstance(details, dict) and "source" in details
 
 
 @dataclasses.dataclass
@@ -182,7 +172,7 @@ class CatPrinterDevice:
             assert self.client is not None
             return self.client
 
-        self._proxy = via_proxy(ble_device)
+        self._proxy = is_proxy(ble_device)
         if self._proxy:
             _LOGGER.debug("%s reached via Bluetooth proxy; using proxy pacing", ble_device.address)
         self.client = await establish_connection(
