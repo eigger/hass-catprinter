@@ -4,11 +4,18 @@ from __future__ import annotations
 
 import base64
 
+from bleak.exc import BleakError
+from blesession import BleSessionError
 from homeassistant.components.image import Image
 
 from .catprinter_ble import BLEData
 
 DOMAIN = "catprinter"
+
+#: Failures a service call or a poll reports as a Home Assistant error rather
+#: than a traceback: session errors, bleak connection/GATT errors, a backend
+#: timeout.
+EXPECTED_ERRORS = (BleSessionError, BleakError, TimeoutError, RuntimeError)
 
 #: ``hass.data`` key of the domain-wide print lock (see ``data.get_print_lock``).
 PRINT_LOCK = f"{DOMAIN}_print_lock"

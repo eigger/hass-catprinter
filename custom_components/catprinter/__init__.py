@@ -30,10 +30,11 @@ from .const import (
     DEFAULT_POLL_MINUTES,
     DOMAIN,
     EMPTY_PNG,
+    EXPECTED_ERRORS,
     ImageAndBLEData,
 )
 from .data import CatPrinterConfigEntry, CatPrinterRuntimeData, get_print_lock
-from .services import EXPECTED_ERRORS, async_setup_services
+from .services import async_setup_services
 from .session_report import build_session_report
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.IMAGE, Platform.BINARY_SENSOR]
@@ -125,6 +126,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: CatPrinterConfigEntry) -
     coordinator: DataUpdateCoordinator[BLEData] = DataUpdateCoordinator(
         hass,
         _LOGGER,
+        config_entry=entry,
         name=DOMAIN,
         update_method=_async_update_method,
         update_interval=timedelta(minutes=poll_minutes),
@@ -139,7 +141,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: CatPrinterConfigEntry) -
         )
 
     image_coordinator: DataUpdateCoordinator[ImageAndBLEData] = DataUpdateCoordinator(
-        hass, _LOGGER, name=DOMAIN
+        hass, _LOGGER, config_entry=entry, name=DOMAIN
     )
     image_coordinator.async_set_updated_data(
         (Image(content_type="image/png", content=EMPTY_PNG), coordinator.data)

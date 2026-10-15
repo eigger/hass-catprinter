@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import base64
 import io
-import logging
 
-from bleak.exc import BleakError
-from blesession import BleSessionError
 from homeassistant.components import bluetooth
 from homeassistant.components.image import Image
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import ATTR_AREA_ID, ATTR_DEVICE_ID, ATTR_ENTITY_ID
 from homeassistant.core import (
     HomeAssistant,
@@ -22,15 +20,9 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from .catprinter_ble import CatPrinterDevice
-from .const import DOMAIN
+from .const import DOMAIN, EXPECTED_ERRORS
 from .data import CatPrinterConfigEntry, get_print_lock
 from .render import render_image
-
-_LOGGER = logging.getLogger(__name__)
-
-#: Failures a service call reports as a Home Assistant error rather than a
-#: traceback: session errors, bleak connection/GATT errors, a backend timeout.
-EXPECTED_ERRORS = (BleSessionError, BleakError, TimeoutError, RuntimeError)
 
 SERVICE_PRINT = "print"
 SERVICE_FEED = "feed"
@@ -57,6 +49,12 @@ def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_FEED, feed_service)
 
 
+def _require_loaded(entry: CatPrinterConfigEntry) -> None:
+    """Refuse a printer that was unloaded while an earlier target was running."""
+    if entry.state is not ConfigEntryState.LOADED:
+        raise HomeAssistantError(f"Printer {entry.title} is no longer loaded")
+
+
 def _ble_device_for(hass: HomeAssistant, device: CatPrinterDevice):
     ble_device = bluetooth.async_ble_device_from_address(hass, device.address)
     if ble_device is None:
@@ -70,6 +68,7 @@ async def _print_on_entry(
     hass: HomeAssistant, entry: CatPrinterConfigEntry, service: ServiceCall
 ) -> dict:
     """Render and print one image on one configured printer."""
+    _require_loaded(entry)
     runtime = entry.runtime_data
     coordinator = runtime.coordinator
     device = runtime.device
@@ -120,6 +119,7 @@ async def _print_on_entry(
 async def _feed_on_entry(
     hass: HomeAssistant, entry: CatPrinterConfigEntry, dots: int
 ) -> None:
+    _require_loaded(entry)
     runtime = entry.runtime_data
     device = runtime.device
     ble_device = _ble_device_for(hass, device)
