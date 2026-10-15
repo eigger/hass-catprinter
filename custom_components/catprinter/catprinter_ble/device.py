@@ -361,6 +361,25 @@ class CatPrinterDevice:
                 self.client = None
                 self._notify_connection()
 
+    async def close(self, wait_s: float) -> bool:
+        """Stop keeping the link and close it once the running operation ends.
+
+        Returns False when that operation outlasted ``wait_s``; the caller then
+        schedules ``close_when_idle`` so the link is not left holding a slot.
+        """
+        self.keep_connection = False
+        try:
+            async with asyncio.timeout(wait_s):
+                await self.close_when_idle()
+        except TimeoutError:
+            return False
+        return True
+
+    async def close_when_idle(self) -> None:
+        """Wait for the running operation, then close whatever link it left."""
+        async with self.lock:
+            await self.disconnect()
+
     # ------------------------------------------------------------------
     # polling
     # ------------------------------------------------------------------

@@ -659,3 +659,31 @@ def test_switching_keep_connection_off_mid_operation_still_leaves_a_closable_lin
     asyncio.run(run())
     assert fake.disconnects == 1
     assert dev.client is None
+
+
+def test_close_waits_for_a_running_operation_then_closes_the_link(monkeypatch):
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    dev.keep_connection = True
+
+    async def run():
+        release = asyncio.Event()
+
+        async def job():
+            async with dev.lock:
+                async with dev._operation(ble, "feed"):
+                    await release.wait()
+
+        task = asyncio.ensure_future(job())
+        await asyncio.sleep(0.02)
+        assert await dev.close(0.05) is False  # still running: caller schedules the rest
+        assert dev.keep_connection is False
+        closer = asyncio.ensure_future(dev.close_when_idle())
+        release.set()
+        await task
+        await closer
+
+    asyncio.run(run())
+    assert fake.disconnects == 1
+    assert dev.client is None
