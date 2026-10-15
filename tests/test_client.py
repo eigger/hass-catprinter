@@ -484,3 +484,72 @@ def test_prepare_names_the_printer_without_connecting(monkeypatch):
     dev.prepare(ble)
     assert dev.ble_data.name == "X6h-0000"
     assert dev.ble_data.model_id
+
+
+def test_kept_link_is_dropped_after_a_hung_write(monkeypatch):
+    """A proxy that stopped answering can still say connected: do not reuse it."""
+    from PIL import Image
+
+    monkeypatch.setattr(client_mod, "WRITE_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    dev.keep_connection = True
+    orig = fake.write_gatt_char
+
+    async def hang(uuid, data, response=False):
+        await asyncio.sleep(10)
+
+    fake.write_gatt_char = hang  # the pre-print status query hangs
+
+    async def run():
+        with pytest.raises(WriteTimeout):
+            await dev.print_image(ble, Image.new("1", (384, 8)))
+
+    asyncio.run(run())
+    assert dev.client is None
+    assert dev.is_connected is False
+    assert fake.disconnects == 1
+    fake.write_gatt_char = orig
+
+
+def test_diagnosis_after_a_stall_is_bounded(monkeypatch):
+    from PIL import Image
+
+    import catprinter_ble.device as device_mod
+
+    monkeypatch.setattr(client_mod, "WRITE_TIMEOUT", 0.05)
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    monkeypatch.setattr(device_mod, "DIAGNOSE_TIMEOUT_S", 0.1)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    reports = []
+    dev.callback_session = lambda op, trace, outcome: reports.append((op, outcome))
+    connects = {"n": 0}
+
+    async def connect(*_a, **kwargs):
+        connects["n"] += 1
+        if connects["n"] > 1:  # the reconnect for the diagnosis never completes
+            assert kwargs.get("max_attempts") == 1
+            await asyncio.sleep(10)
+        fake.is_connected = True
+        return fake
+
+    monkeypatch.setattr("blesession.session.establish_connection", connect)
+    orig = fake.write_gatt_char
+    calls = {"n": 0}
+
+    async def write(uuid, data, response=False):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            await asyncio.sleep(10)
+        await orig(uuid, data, response)
+
+    fake.write_gatt_char = write
+
+    async def run():
+        with pytest.raises(WriteTimeout):
+            await dev.print_image(ble, Image.new("1", (384, 8)))
+
+    asyncio.run(run())
+    assert [op for op, _ in reports] == ["print"]
+    assert dev.is_printing is False

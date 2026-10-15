@@ -87,3 +87,11 @@ def test_print_failure_is_kept_after_a_later_success():
     assert reports.last_failure is failure
     assert reports.of("print")["success"] is True
 
+
+
+def test_silent_status_query_is_not_blamed_on_the_session_start():
+    from blesession import NotificationTimeout
+
+    report = _report(NotificationTimeout(5, step="query_state"), operation="poll", stage_name="query_state")
+    assert "did not answer (query_state)" in report["likely_cause"]
+    assert "likely_cause_key" not in report
