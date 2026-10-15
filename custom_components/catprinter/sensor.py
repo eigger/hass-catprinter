@@ -247,13 +247,14 @@ class CatPrinterLastFailureSensor(_SessionReportSensor):
 class CatPrinterErrorCountSensor(_SessionReportSensor):
     """How many BLE sessions have failed since this entry was loaded.
 
-    Starts over on every reload, so it is not a long-term statistic. A poll
-    that fails before the link is up is not counted; a print failure, or a
+    Starts over (at 0) on every reload; the recorder treats that as a counter
+    reset. A poll that fails before the link is up is not counted; a print failure, or a
     poll that connected and then failed, is.
     """
 
     _key = "error_count"
     _attr_translation_key = "error_count"
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_icon = "mdi:alert-circle-outline"
 
     @property
