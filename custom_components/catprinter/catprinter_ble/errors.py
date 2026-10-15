@@ -14,7 +14,6 @@ class ErrorCode(StrEnum):
     UNSUPPORTED_DEVICE = "unsupported_device"
     SERVICE_NOT_FOUND = "service_not_found"
     NOT_CONNECTED = "not_connected"
-    PRINT_FAILED = "print_failed"
     TIMEOUT = "timeout"
     STALLED = "stalled"
     PRINTER_ERROR = "printer_error"

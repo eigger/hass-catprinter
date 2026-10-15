@@ -1,7 +1,9 @@
 """Home Assistant facing adapter around CatPrinterClient.
 
-Owns the connection, serialises access with a lock, and exposes the
-coordinator-friendly ``BLEData`` snapshot.
+Runs each operation (poll, print, feed) as one ``ble_session`` and files its
+report; the only link it owns is the one ``keep_connection`` leaves up.
+Serialises access with a lock and exposes the coordinator-friendly ``BLEData``
+snapshot.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ from bleak.backends.device import BLEDevice
 from blesession import (
     DISCONNECT_TIMEOUT_S,
     BleSessionError,
+    SessionDropped,
     SessionReports,
     SessionTrace,
     WriteTimeout,
@@ -50,6 +53,11 @@ _LOGGER = logging.getLogger(__name__)
 PROXY_INTERVAL_MS = 20
 PROXY_PACKET_SIZE = 100
 
+#: Upper bound on the reconnect-and-ask that follows a stalled print. A proxy
+#: that stopped answering would otherwise hold the domain print lock through
+#: every connect retry.
+DIAGNOSE_TIMEOUT_S = 20.0
+
 #: Our stage names -> blesession's shared vocabulary, so ``failed_stage`` reads
 #: the same here as in every other integration.
 STAGE_MAP = {
@@ -76,6 +84,9 @@ class _Session:
     #: Set by the body when the caller will report the outcome itself after
     #: the link is closed (a stalled print is re-judged by ``_diagnose``).
     defer_commit: bool = False
+    #: Set by the body when it swallowed a failure that proves the kept link is
+    #: hung (a write that never returned), so it is closed rather than reused.
+    discard_link: bool = False
 
 
 @dataclasses.dataclass
@@ -209,7 +220,7 @@ class CatPrinterDevice:
 
     @contextlib.asynccontextmanager
     async def _operation(
-        self, ble_device: BLEDevice, operation: str
+        self, ble_device: BLEDevice, operation: str, **connect_kwargs
     ) -> AsyncIterator[_Session]:
         """One BLE operation: resolve the model, connect, subscribe, run the
         body, unsubscribe, disconnect, then file the report.
@@ -228,7 +239,7 @@ class CatPrinterDevice:
                 name=ble_device.address,
                 client=self.client,
                 keep=self.keep_connection,
-                use_services_cache=False,
+                **{"use_services_cache": False, **connect_kwargs},
             ) as client:
                 if client is not self.client:
                     self.client = client
@@ -250,13 +261,26 @@ class CatPrinterDevice:
             outcome = exc
             raise
         finally:
-            if self.client is not None and (
-                not self.keep_connection or not self.client.is_connected
-            ):
-                self.client = None
-                self._notify_connection()
-            if session is None or not session.defer_commit:
-                self._commit_session(operation, trace, outcome)
+            # A link whose writes hang can still claim to be connected (a proxy
+            # that stopped answering). Reusing it would fail every later job
+            # the same way, so a kept link is closed and the next job connects
+            # afresh. Nested so a cancel while closing still clears the link
+            # and files the report.
+            discard = self.keep_connection and (
+                isinstance(outcome, (WriteTimeout, SessionDropped))
+                or (session is not None and session.discard_link)
+            )
+            try:
+                if discard:
+                    await self.disconnect()
+            finally:
+                if self.client is not None and (
+                    discard or not self.keep_connection or not self.client.is_connected
+                ):
+                    self.client = None
+                    self._notify_connection()
+                if session is None or not session.defer_commit or outcome is not None:
+                    self._commit_session(operation, trace, outcome)
 
     def _commit_session(
         self, operation: str, trace: SessionTrace, outcome: BaseException | None
@@ -329,9 +353,10 @@ class CatPrinterDevice:
                     await self.client.disconnect()
             except Exception:  # noqa: BLE001
                 _LOGGER.debug("Disconnect failed", exc_info=True)
-                # Do not reuse a link that would not close; connect afresh.
+            finally:
+                # Closed or not, do not reuse this link; connect afresh.
                 self.client = None
-            self._notify_connection()
+                self._notify_connection()
 
     # ------------------------------------------------------------------
     # polling
@@ -477,9 +502,13 @@ class CatPrinterDevice:
         """Drop any kept connection, reconnect and read the status once."""
         await self.disconnect()
         try:
-            async with self._operation(ble_device, "diagnose") as session:
-                with session.trace.timed("query_state"):
-                    state = await session.printer.query_state(required=False)
+            async with asyncio.timeout(DIAGNOSE_TIMEOUT_S):
+                # One connect attempt: a printer that just stalled either
+                # answers on a fresh link or does not, and retries only hold
+                # the print lock longer.
+                async with self._operation(ble_device, "diagnose", max_attempts=1) as session:
+                    with session.trace.timed("query_state"):
+                        state = await session.printer.query_state(required=False)
         except Exception:  # noqa: BLE001 - diagnosis is best effort
             _LOGGER.debug("Could not read status after a stalled job", exc_info=True)
             return None
@@ -495,6 +524,9 @@ class CatPrinterDevice:
                 try:
                     with trace.timed("query_state"):
                         await printer.query_state(required=False)
-                except (BleSessionError, BleakError, RuntimeError):
+                except (BleSessionError, BleakError, RuntimeError) as err:
                     # The paper has moved; a lost status read is not a failed feed.
+                    trace.forgive("query_state")
+                    if isinstance(err, (WriteTimeout, SessionDropped)):
+                        session.discard_link = True
                     _LOGGER.debug("Status read after feed failed", exc_info=True)

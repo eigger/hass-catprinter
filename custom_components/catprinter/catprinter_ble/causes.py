@@ -10,6 +10,7 @@ from __future__ import annotations
 from blesession import (
     Failure,
     GattMismatch,
+    NotificationTimeout,
     SessionDropped,
     WriteTimeout,
     generic_cause,
@@ -50,7 +51,6 @@ _CODE_CAUSES = {
 _FALLBACK_CAUSE = "The session failed before the first stage was reached; see error."
 
 
-
 def printer_cause(failure: Failure, operation: str) -> str | None:
     """The printer's own reading of a failure, or None where the shared one fits."""
     exc = failure.exc
@@ -60,6 +60,13 @@ def printer_cause(failure: Failure, operation: str) -> str | None:
     # a dropped link, a missing characteristic): its sentence and key win.
     if isinstance(exc, (WriteTimeout, SessionDropped, GattMismatch)):
         return None
+    if isinstance(exc, NotificationTimeout):
+        # Connected and subscribed, then silence: the protocol had started, so
+        # the shared "refused the session" sentence would mislead.
+        return (
+            f"The printer is connected but did not answer ({exc.step or 'status query'}). It may be "
+            "busy, going to sleep, or a different model or firmware than selected."
+        )
     if isinstance(exc, CatPrinterError) and exc.code in _CODE_CAUSES:
         return _CODE_CAUSES[exc.code]
     return None
