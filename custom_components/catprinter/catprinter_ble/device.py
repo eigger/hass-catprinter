@@ -15,7 +15,7 @@ from collections.abc import Callable
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 from bleak_retry_connector import establish_connection
-from blesession import WriteTimeout, is_proxy
+from blesession import DISCONNECT_TIMEOUT_S, BleSessionError, WriteTimeout, is_proxy
 from PIL import Image
 
 from .client import CatPrinterClient
@@ -216,7 +216,9 @@ class CatPrinterDevice:
     async def disconnect(self) -> None:
         if self.client and self.client.is_connected:
             try:
-                await self.client.disconnect()
+                # A proxy that stopped answering must not hold the locks.
+                async with asyncio.timeout(DISCONNECT_TIMEOUT_S):
+                    await self.client.disconnect()
             except Exception:  # noqa: BLE001
                 _LOGGER.debug("Disconnect failed", exc_info=True)
             self._notify_connection()
@@ -241,7 +243,7 @@ class CatPrinterDevice:
             try:
                 await printer.start()
                 if not self.ble_data.sw_version:
-                    info = await printer.query_info()
+                    info = await printer.query_info(required=False)
                     if info is not None:
                         self.ble_data.device_type = info.device_type
                         self.ble_data.sw_version = info.firmware
@@ -369,7 +371,11 @@ class CatPrinterDevice:
             try:
                 await printer.start()
                 await printer.feed(dots, profile.feed_step)
-                await printer.query_state(required=False)
+                try:
+                    await printer.query_state(required=False)
+                except BleSessionError:
+                    # The paper has moved; a lost status read is not a failed feed.
+                    _LOGGER.debug("Status read after feed failed", exc_info=True)
             finally:
                 await printer.stop()
                 if not self.keep_connection:

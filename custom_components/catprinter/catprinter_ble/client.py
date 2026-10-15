@@ -270,13 +270,14 @@ class CatPrinterClient:
         waiter = self._add_waiter(cmd)
         try:
             await self.send(packet, step=step)
-            try:
-                return await asyncio.wait_for(waiter, QUERY_TIMEOUT)
-            except TimeoutError:
-                _LOGGER.debug("No reply to %02X within %.0fs", cmd, QUERY_TIMEOUT)
-                if required:
-                    raise NotificationTimeout(QUERY_TIMEOUT, step=step) from None
-                return None
+            return await asyncio.wait_for(waiter, QUERY_TIMEOUT)
+        except WriteTimeout:
+            raise  # a hung write is not a missing reply
+        except TimeoutError:
+            _LOGGER.debug("No reply to %02X within %.0fs", cmd, QUERY_TIMEOUT)
+            if required:
+                raise NotificationTimeout(QUERY_TIMEOUT, step=step) from None
+            return None
         finally:
             self._drop_waiter(cmd, waiter)
 

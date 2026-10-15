@@ -228,3 +228,84 @@ def test_hung_write_is_a_write_timeout_not_a_silent_query(printer, monkeypatch):
     with pytest.raises(WriteTimeout) as exc:
         asyncio.run(run())
     assert exc.value.step == "query_state"
+
+
+# ---------------------------------------------------------------------------
+# CatPrinterDevice flows
+# ---------------------------------------------------------------------------
+
+
+def _device_with(monkeypatch, fake):
+    from catprinter_ble import device as device_mod
+
+    async def connect(*_args, **_kwargs):
+        return fake
+
+    fake.disconnects = 0
+
+    async def disconnect():
+        fake.disconnects += 1
+        fake.is_connected = False
+
+    fake.disconnect = disconnect
+    monkeypatch.setattr(device_mod, "establish_connection", connect)
+    dev = device_mod.CatPrinterDevice("AA:BB:CC:DD:EE:FF", interval_ms=0)
+    ble = SimpleNamespace(
+        address="AA:BB:CC:DD:EE:FF", name="X6h-0000", details={"path": "/org/bluez/hci0/dev_AA"}
+    )
+    return dev, ble
+
+
+def test_poll_still_reads_state_when_info_is_unanswered(monkeypatch):
+    """A8 is cosmetic: a printer that ignores it must not block status polling."""
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    orig = fake.write_gatt_char
+
+    async def write(uuid, data, response=False):
+        await orig(uuid, data, response)
+        if bytes(data) == p.cmd_get_state():
+            fake.push(reply(0xA3, bytes.fromhex("00 0d 27")))
+
+    fake.write_gatt_char = write
+    data = asyncio.run(dev.update_device(ble))
+    assert data.sensors["status"] == "ok"
+    assert data.sensors["battery"] is not None
+    assert fake.disconnects == 1
+
+
+def test_silent_state_on_poll_raises(monkeypatch):
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    with pytest.raises(NotificationTimeout):
+        asyncio.run(dev.update_device(ble))
+    assert fake.disconnects == 1
+
+
+def test_hung_write_during_print_cleans_up(monkeypatch):
+    from PIL import Image
+
+    monkeypatch.setattr(client_mod, "WRITE_TIMEOUT", 0.05)
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    orig = fake.write_gatt_char
+    calls = {"n": 0}
+
+    async def write(uuid, data, response=False):
+        calls["n"] += 1
+        if calls["n"] > 1:  # the pre-print status query goes through, the job hangs
+            await asyncio.sleep(10)
+        await orig(uuid, data, response)
+
+    fake.write_gatt_char = write
+
+    async def run():
+        with pytest.raises(WriteTimeout):
+            await dev.print_image(ble, Image.new("1", (384, 16)))
+
+    asyncio.run(run())
+    assert dev.is_printing is False
+    assert fake.disconnects >= 1
