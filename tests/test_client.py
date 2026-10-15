@@ -309,3 +309,36 @@ def test_hung_write_during_print_cleans_up(monkeypatch):
     asyncio.run(run())
     assert dev.is_printing is False
     assert fake.disconnects >= 1
+
+
+def test_feed_survives_a_failed_status_read(monkeypatch):
+    from bleak.exc import BleakError
+
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    orig = fake.write_gatt_char
+
+    async def write(uuid, data, response=False):
+        if bytes(data) == p.cmd_get_state():
+            raise BleakError("write failed")
+        await orig(uuid, data, response)
+
+    fake.write_gatt_char = write
+    asyncio.run(dev.feed(ble, 48))
+    assert fake.writes  # the feed itself went out
+
+
+def test_stuck_disconnect_is_bounded_and_link_dropped(monkeypatch):
+    import catprinter_ble.device as device_mod
+
+    monkeypatch.setattr(device_mod, "DISCONNECT_TIMEOUT_S", 0.05)
+    fake = FakeClient()
+    dev, _ble = _device_with(monkeypatch, fake)
+
+    async def stuck():
+        await asyncio.sleep(10)
+
+    fake.disconnect = stuck
+    dev.client = fake
+    asyncio.run(dev.disconnect())
+    assert dev.client is None

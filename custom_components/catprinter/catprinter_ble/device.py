@@ -13,6 +13,7 @@ import time
 from collections.abc import Callable
 
 from bleak import BleakClient
+from bleak.exc import BleakError
 from bleak.backends.device import BLEDevice
 from bleak_retry_connector import establish_connection
 from blesession import DISCONNECT_TIMEOUT_S, BleSessionError, WriteTimeout, is_proxy
@@ -221,6 +222,8 @@ class CatPrinterDevice:
                     await self.client.disconnect()
             except Exception:  # noqa: BLE001
                 _LOGGER.debug("Disconnect failed", exc_info=True)
+                # Do not reuse a link that would not close; connect afresh.
+                self.client = None
             self._notify_connection()
 
     # ------------------------------------------------------------------
@@ -373,7 +376,7 @@ class CatPrinterDevice:
                 await printer.feed(dots, profile.feed_step)
                 try:
                     await printer.query_state(required=False)
-                except BleSessionError:
+                except (BleSessionError, BleakError, RuntimeError):
                     # The paper has moved; a lost status read is not a failed feed.
                     _LOGGER.debug("Status read after feed failed", exc_info=True)
             finally:
