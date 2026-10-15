@@ -7,16 +7,25 @@ coordinator-friendly ``BLEData`` snapshot.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import dataclasses
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 
 from bleak import BleakClient
 from bleak.exc import BleakError
 from bleak.backends.device import BLEDevice
-from bleak_retry_connector import establish_connection
-from blesession import DISCONNECT_TIMEOUT_S, BleSessionError, WriteTimeout, is_proxy
+from blesession import (
+    DISCONNECT_TIMEOUT_S,
+    BleSessionError,
+    SessionReports,
+    SessionTrace,
+    WriteTimeout,
+    ble_session,
+    is_proxy,
+    stages,
+)
 from PIL import Image
 
 from .client import CatPrinterClient
@@ -40,6 +49,33 @@ _LOGGER = logging.getLogger(__name__)
 #: bands or a truncated print.
 PROXY_INTERVAL_MS = 20
 PROXY_PACKET_SIZE = 100
+
+#: Our stage names -> blesession's shared vocabulary, so ``failed_stage`` reads
+#: the same here as in every other integration.
+STAGE_MAP = {
+    "subscribe": stages.SESSION,
+    "precheck": stages.SESSION,
+    "query_info": stages.SESSION,
+    "query_state": stages.SESSION,
+    "raster": stages.TRANSFER,
+    "feed": stages.TRANSFER,
+}
+
+#: Callback signature: ``(operation, trace, outcome)`` with ``outcome`` the
+#: exception that ended the session, or None.
+SessionCallback = Callable[[str, SessionTrace, BaseException | None], None]
+
+
+@dataclasses.dataclass
+class _Session:
+    """What an ``_operation`` hands its body."""
+
+    printer: CatPrinterClient
+    trace: SessionTrace
+    profile: DeviceProfile
+    #: Set by the body when the caller will report the outcome itself after
+    #: the link is closed (a stalled print is re-judged by ``_diagnose``).
+    defer_commit: bool = False
 
 
 @dataclasses.dataclass
@@ -84,6 +120,9 @@ class CatPrinterDevice:
         self._proxy = False
 
         self.lock = asyncio.Lock()
+        self.reports = SessionReports()
+        #: Called once per finished session worth reporting (see ``_commit_session``).
+        self.callback_session: SessionCallback | None = None
         self.client: BleakClient | None = None
         self.profile: DeviceProfile | None = None
         self.ble_data = BLEData(
@@ -168,24 +207,92 @@ class CatPrinterDevice:
         self.ble_data.dpi = profile.dpi
         return profile
 
-    async def _ensure_connected(self, ble_device: BLEDevice) -> BleakClient:
-        if self.is_connected:
-            assert self.client is not None
-            return self.client
+    @contextlib.asynccontextmanager
+    async def _operation(
+        self, ble_device: BLEDevice, operation: str
+    ) -> AsyncIterator[_Session]:
+        """One BLE operation: resolve the model, connect, subscribe, run the
+        body, unsubscribe, disconnect, then file the report.
 
-        self._proxy = is_proxy(ble_device)
-        if self._proxy:
-            _LOGGER.debug("%s reached via Bluetooth proxy; using proxy pacing", ble_device.address)
-        self.client = await establish_connection(
-            BleakClient,
-            ble_device,
-            ble_device.address,
-            use_services_cache=False,
+        Callers hold ``self.lock``. ``ble_session`` owns the connect, reusing
+        a ``keep_connection`` link, the drop watch and the bounded disconnect.
+        """
+        trace = SessionTrace(stage_map=STAGE_MAP)
+        outcome: BaseException | None = None
+        session: _Session | None = None
+        try:
+            profile = self._resolve_profile(ble_device)
+            async with ble_session(
+                ble_device,
+                trace=trace,
+                name=ble_device.address,
+                client=self.client,
+                keep=self.keep_connection,
+                use_services_cache=False,
+            ) as client:
+                if client is not self.client:
+                    self.client = client
+                    self._notify_connection()
+                self._proxy = is_proxy(ble_device)
+                if self._proxy:
+                    _LOGGER.debug(
+                        "%s reached via Bluetooth proxy; using proxy pacing", ble_device.address
+                    )
+                printer = self._make_client(client, profile)
+                session = _Session(printer, trace, profile)
+                try:
+                    with trace.timed("subscribe"):
+                        await printer.start()
+                    yield session
+                finally:
+                    await printer.stop()
+        except BaseException as exc:
+            outcome = exc
+            raise
+        finally:
+            if self.client is not None and (
+                not self.keep_connection or not self.client.is_connected
+            ):
+                self.client = None
+                self._notify_connection()
+            if session is None or not session.defer_commit:
+                self._commit_session(operation, trace, outcome)
+
+    def _commit_session(
+        self, operation: str, trace: SessionTrace, outcome: BaseException | None
+    ) -> None:
+        """Hand a finished session to ``callback_session``.
+
+        A cancelled session is not an outcome. Prints and feeds are always
+        reported; a poll only when it failed in a way that counts, so a
+        printer that is off or asleep between jobs does not climb the error
+        count on every scan interval.
+        """
+        if isinstance(outcome, asyncio.CancelledError) or self.callback_session is None:
+            return
+        if operation == "diagnose":
+            return
+        if operation == "poll" and (outcome is None or not self._counts_as_failure(trace, outcome)):
+            return
+        try:
+            self.callback_session(operation, trace, outcome)
+        except Exception:  # noqa: BLE001 - diagnostics must not mask the outcome
+            _LOGGER.debug("Reporting the %s session failed", operation, exc_info=True)
+
+    @staticmethod
+    def _counts_as_failure(trace: SessionTrace, outcome: BaseException) -> bool:
+        """Whether a failed *poll* belongs on the failure sensors.
+
+        Not when the printer could not be reached (off, asleep, out of range)
+        and not when the model is permanently unusable: both repeat on every
+        poll and would push the last real failure off the sensor.
+        """
+        if trace.failed_primary in (stages.CONNECT, stages.UNREACHABLE):
+            return False
+        return not (
+            isinstance(outcome, CatPrinterError)
+            and outcome.code in (ErrorCode.UNKNOWN_DEVICE, ErrorCode.UNSUPPORTED_DEVICE)
         )
-        if not self.client.is_connected:
-            raise CatPrinterError(ErrorCode.NOT_CONNECTED, "Could not connect to the printer")
-        self._notify_connection()
-        return self.client
 
     def _make_client(self, client: BleakClient, profile: DeviceProfile) -> CatPrinterClient:
         interval = self._interval_ms
@@ -234,27 +341,21 @@ class CatPrinterDevice:
         """Refresh the BLEData snapshot."""
         async with self.lock:
             profile = self._resolve_profile(ble_device)
-
             if not self.ble_data.name or self.ble_data.name == "Cat Printer":
                 self.ble_data.name = ble_device.name or profile.model_id
             if not self.ble_data.address:
                 self.ble_data.address = ble_device.address
 
-            client = await self._ensure_connected(ble_device)
-            printer = self._make_client(client, profile)
-
-            try:
-                await printer.start()
+            async with self._operation(ble_device, "poll") as session:
+                printer, trace = session.printer, session.trace
                 if not self.ble_data.sw_version:
-                    info = await printer.query_info(required=False)
+                    with trace.timed("query_info"):
+                        info = await printer.query_info(required=False)
                     if info is not None:
                         self.ble_data.device_type = info.device_type
                         self.ble_data.sw_version = info.firmware
-                await printer.query_state()
-            finally:
-                await printer.stop()
-                if not self.keep_connection:
-                    await self.disconnect()
+                with trace.timed("query_state"):
+                    await printer.query_state()
 
             _LOGGER.debug("Obtained BLEData: %s", self.ble_data)
             return self.ble_data
@@ -278,65 +379,71 @@ class CatPrinterDevice:
     ) -> dict:
         """Render and print one image."""
         async with self.lock:
-            profile = self._resolve_profile(ble_device)
-            client = await self._ensure_connected(ble_device)
-            printer = self._make_client(client, profile)
-
-            fitted = fit_to_printhead(image, profile.printhead_px)
-            bitmap = to_raster(fitted)
-            params = JobParams(
-                mode=mode,
-                energy=energy if energy is not None else profile.energy_for(mode, density),
-                speed=speed if speed is not None else profile.speed_for(mode),
-                feed_dots=feed_dots if feed_dots is not None else profile.default_feed_dots,
-                feed_step=profile.feed_step,
-                copies=copies,
-            )
-            rows = [bitmap.row(i) for i in range(bitmap.height)]
-            job = build_print_job(rows, bitmap.width, params)
-            _LOGGER.debug(
-                "Print %dx%d mode=%s energy=%s speed=%d feed=%d copies=%d -> %d bytes",
-                bitmap.width, bitmap.height, params.mode, params.energy,
-                params.speed, params.feed_dots, copies, len(job),
-            )
-
             self._is_printing = True
             self._print_start = time.time()
             self._print_end = None
             self._notify_printing()
-
+            stalled: BaseException | None = None
+            trace: SessionTrace | None = None
             try:
-                await printer.start()
-                # Ask before sending: a fault now means the raster would only
-                # be discarded, and the error surfaces immediately instead of
-                # after the whole job has been pushed.
-                state = await printer.query_state(required=False)
-                if state is not None and state.fault:
-                    raise PrinterError(state.fault)
-                try:
-                    await printer.print_job(job, bitmap.height * copies, on_progress)
-                except (CatPrinterError, WriteTimeout) as err:
-                    if isinstance(err, CatPrinterError) and err.code not in (
-                        ErrorCode.STALLED,
-                        ErrorCode.TIMEOUT,
-                    ):
-                        raise
-                    # The printer went quiet mid-job. It does not push status
-                    # on its own, and a stalled command queue does not answer
-                    # queries either, so reconnect and ask on a clean link to
-                    # name the cause.
-                    await printer.stop()
-                    fault = await self._diagnose(ble_device)
-                    if fault:
-                        raise PrinterError(fault) from err
-                    raise
+                async with self._operation(ble_device, "print") as session:
+                    printer, trace, profile = session.printer, session.trace, session.profile
+                    fitted = fit_to_printhead(image, profile.printhead_px)
+                    bitmap = to_raster(fitted)
+                    params = JobParams(
+                        mode=mode,
+                        energy=energy if energy is not None else profile.energy_for(mode, density),
+                        speed=speed if speed is not None else profile.speed_for(mode),
+                        feed_dots=feed_dots if feed_dots is not None else profile.default_feed_dots,
+                        feed_step=profile.feed_step,
+                        copies=copies,
+                    )
+                    rows = [bitmap.row(i) for i in range(bitmap.height)]
+                    job = build_print_job(rows, bitmap.width, params)
+                    trace.note(width=bitmap.width, height=bitmap.height, job_bytes=len(job))
+                    _LOGGER.debug(
+                        "Print %dx%d mode=%s energy=%s speed=%d feed=%d copies=%d -> %d bytes",
+                        bitmap.width, bitmap.height, params.mode, params.energy,
+                        params.speed, params.feed_dots, copies, len(job),
+                    )
+
+                    # Ask before sending: a fault now means the raster would only
+                    # be discarded, and the error surfaces immediately instead of
+                    # after the whole job has been pushed.
+                    with trace.timed("precheck"):
+                        state = await printer.query_state(required=False)
+                    if state is not None and state.fault:
+                        raise PrinterError(state.fault)
+                    try:
+                        with trace.timed("raster"):
+                            await printer.print_job(job, bitmap.height * copies, on_progress)
+                    except (CatPrinterError, WriteTimeout) as err:
+                        if isinstance(err, CatPrinterError) and err.code not in (
+                            ErrorCode.STALLED,
+                            ErrorCode.TIMEOUT,
+                        ):
+                            raise
+                        # The printer went quiet mid-job. It does not push status
+                        # on its own, and a stalled command queue does not answer
+                        # queries either, so close this link, reconnect and ask on
+                        # a clean one to name the cause. The report waits for that.
+                        stalled = err
+                        session.defer_commit = True
+
+                if stalled is not None:
+                    outcome: BaseException = stalled
+                    try:
+                        fault = await self._diagnose(ble_device)
+                        if fault:
+                            outcome = PrinterError(fault)
+                            outcome.__cause__ = stalled
+                    finally:
+                        self._commit_session("print", trace, outcome)
+                    raise outcome
             finally:
-                await printer.stop()
                 self._print_end = time.time()
                 self._is_printing = False
                 self._notify_printing()
-                if not self.keep_connection:
-                    await self.disconnect()
 
         return {
             "status": "ok",
@@ -350,16 +457,12 @@ class CatPrinterDevice:
         }
 
     async def _diagnose(self, ble_device: BLEDevice) -> str | None:
-        """Drop the connection, reconnect and read the status once."""
+        """Drop any kept connection, reconnect and read the status once."""
         await self.disconnect()
         try:
-            client = await self._ensure_connected(ble_device)
-            printer = self._make_client(client, self.profile)  # type: ignore[arg-type]
-            try:
-                await printer.start()
-                state = await printer.query_state(required=False)
-            finally:
-                await printer.stop()
+            async with self._operation(ble_device, "diagnose") as session:
+                with session.trace.timed("query_state"):
+                    state = await session.printer.query_state(required=False)
         except Exception:  # noqa: BLE001 - diagnosis is best effort
             _LOGGER.debug("Could not read status after a stalled job", exc_info=True)
             return None
@@ -368,18 +471,13 @@ class CatPrinterDevice:
     async def feed(self, ble_device: BLEDevice, dots: int) -> None:
         """Advance the paper without printing."""
         async with self.lock:
-            profile = self._resolve_profile(ble_device)
-            client = await self._ensure_connected(ble_device)
-            printer = self._make_client(client, profile)
-            try:
-                await printer.start()
-                await printer.feed(dots, profile.feed_step)
+            async with self._operation(ble_device, "feed") as session:
+                profile, printer, trace = session.profile, session.printer, session.trace
+                with trace.timed("feed"):
+                    await printer.feed(dots, profile.feed_step)
                 try:
-                    await printer.query_state(required=False)
+                    with trace.timed("query_state"):
+                        await printer.query_state(required=False)
                 except (BleSessionError, BleakError, RuntimeError):
                     # The paper has moved; a lost status read is not a failed feed.
                     _LOGGER.debug("Status read after feed failed", exc_info=True)
-            finally:
-                await printer.stop()
-                if not self.keep_connection:
-                    await self.disconnect()

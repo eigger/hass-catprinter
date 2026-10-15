@@ -239,6 +239,7 @@ def _device_with(monkeypatch, fake):
     from catprinter_ble import device as device_mod
 
     async def connect(*_args, **_kwargs):
+        fake.is_connected = True
         return fake
 
     fake.disconnects = 0
@@ -248,7 +249,7 @@ def _device_with(monkeypatch, fake):
         fake.is_connected = False
 
     fake.disconnect = disconnect
-    monkeypatch.setattr(device_mod, "establish_connection", connect)
+    monkeypatch.setattr("blesession.session.establish_connection", connect)
     dev = device_mod.CatPrinterDevice("AA:BB:CC:DD:EE:FF", interval_ms=0)
     ble = SimpleNamespace(
         address="AA:BB:CC:DD:EE:FF", name="X6h-0000", details={"path": "/org/bluez/hci0/dev_AA"}
@@ -342,3 +343,110 @@ def test_stuck_disconnect_is_bounded_and_link_dropped(monkeypatch):
     dev.client = fake
     asyncio.run(dev.disconnect())
     assert dev.client is None
+
+
+def test_stalled_print_is_reported_once_with_the_diagnosed_fault(monkeypatch):
+    from PIL import Image
+
+    from catprinter_ble.errors import PrinterError as PE
+
+    monkeypatch.setattr(client_mod, "WRITE_TIMEOUT", 0.05)
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    reports = []
+    dev.callback_session = lambda op, trace, outcome: reports.append((op, outcome))
+    orig = fake.write_gatt_char
+    state = {"n": 0}
+
+    async def write(uuid, data, response=False):
+        state["n"] += 1
+        if state["n"] == 2:  # the job: the transport hangs
+            await asyncio.sleep(10)
+        await orig(uuid, data, response)
+        if state["n"] == 3:  # the diagnosis query on the fresh link: out of paper
+            fake.push(reply(0xA3, bytes.fromhex("01 00 27")))
+
+    fake.write_gatt_char = write
+
+    with pytest.raises(PE):
+        asyncio.run(dev.print_image(ble, Image.new("1", (384, 16))))
+    assert len(reports) == 1  # the diagnosis session is not a report of its own
+    op, outcome = reports[0]
+    assert op == "print" and isinstance(outcome, PE)
+    assert isinstance(outcome.__cause__, WriteTimeout)
+    assert dev.is_printing is False
+
+
+def test_poll_reports_only_failures_that_count(monkeypatch):
+    from blesession import ConnectFailed
+
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    reports = []
+    dev.callback_session = lambda op, trace, outcome: reports.append((op, outcome))
+
+    # A successful poll is not reported.
+    orig = fake.write_gatt_char
+
+    async def write(uuid, data, response=False):
+        await orig(uuid, data, response)
+        if bytes(data) == p.cmd_get_state():
+            fake.push(reply(0xA3, bytes.fromhex("00 0d 27")))
+
+    fake.write_gatt_char = write
+    asyncio.run(dev.update_device(ble))
+    assert reports == []
+
+    # A printer that cannot be connected to (asleep) is not reported either.
+    async def refuse(*_a, **_k):
+        raise ConnectFailed("asleep")
+
+    monkeypatch.setattr("blesession.session.establish_connection", refuse)
+    with pytest.raises(ConnectFailed):
+        asyncio.run(dev.update_device(ble))
+    assert reports == []
+
+    # A printer that connects but never answers is.
+    async def connect(*_a, **_k):
+        fake.is_connected = True
+        return fake
+
+    monkeypatch.setattr("blesession.session.establish_connection", connect)
+    fake.write_gatt_char = orig
+    with pytest.raises(NotificationTimeout):
+        asyncio.run(dev.update_device(ble))
+    assert [op for op, _ in reports] == ["poll"]
+
+
+def test_keep_connection_reuses_the_link(monkeypatch):
+    monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
+    fake = FakeClient()
+    dev, ble = _device_with(monkeypatch, fake)
+    dev.keep_connection = True
+    connects = {"n": 0}
+
+    async def connect(*_a, **_k):
+        connects["n"] += 1
+        fake.is_connected = True
+        return fake
+
+    monkeypatch.setattr("blesession.session.establish_connection", connect)
+    orig = fake.write_gatt_char
+
+    async def write(uuid, data, response=False):
+        await orig(uuid, data, response)
+        if bytes(data) == p.cmd_get_state():
+            fake.push(reply(0xA3, bytes.fromhex("00 0d 27")))
+
+    fake.write_gatt_char = write
+
+    async def run():
+        await dev.update_device(ble)
+        assert dev.is_connected
+        await dev.update_device(ble)
+
+    asyncio.run(run())
+    assert connects["n"] == 1
+    assert fake.disconnects == 0

@@ -10,7 +10,7 @@ from datetime import timedelta
 
 from bleak_retry_connector import close_stale_connections_by_address
 from bleak.exc import BleakError
-from blesession import BleSessionError
+from blesession import BleSessionError, SessionTrace, fallback_report
 from homeassistant.components import bluetooth
 from homeassistant.components.image import Image
 from homeassistant.config_entries import ConfigEntry
@@ -47,6 +47,7 @@ from .const import (
     ImageAndBLEData,
 )
 from .render import render_image
+from .session_report import build_session_report
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.IMAGE, Platform.BINARY_SENSOR]
 
@@ -85,6 +86,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         packet_size_cap=packet_size_cap,
     )
 
+    def _publish_session_report(
+        operation: str, trace: SessionTrace, outcome: BaseException | None
+    ) -> None:
+        """Freeze this session's report once and file it.
+
+        ``radio_facts`` reads RSSI and path count live, so only the trace that
+        just finished is rendered. A report that cannot be built is replaced
+        by ``fallback_report`` so the session is still counted.
+        """
+        try:
+            report = build_session_report(
+                hass, address, operation=operation, trace=trace, exc=outcome
+            )
+        except Exception as err:  # noqa: BLE001 - diagnostics must not mask the outcome
+            _LOGGER.debug("Building the session report failed: %s", err)
+            report = fallback_report(operation, trace=trace, exc=outcome)
+        device.reports.record(report)
+
+    device.callback_session = _publish_session_report
+
     async def _async_update_method() -> BLEData:
         ble_device = bluetooth.async_ble_device_from_address(hass, address)
         if ble_device is None:
@@ -92,14 +113,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 "Printer %s is not currently visible; keeping last known data", address
             )
             return device.ble_data
-        if device.lock.locked():
-            # A print (or feed) holds the device; it refreshes status itself via
-            # the trailing A3, so queueing another connection behind it only
-            # adds a reconnect right after the job.
-            _LOGGER.debug("Printer %s is busy; skipping this poll", address)
+        print_lock: asyncio.Lock = hass.data[PRINT_LOCK]
+        if device.lock.locked() or print_lock.locked():
+            # A print (or feed) holds this device, or another printer's job
+            # holds the adapter / proxy slots. A print refreshes status itself
+            # via the trailing A3, so queueing a connection behind it only adds
+            # a reconnect right after the job.
+            _LOGGER.debug("Printer %s or the adapter is busy; skipping this poll", address)
             return device.ble_data
         try:
-            return await device.update_device(ble_device)
+            async with print_lock:
+                return await device.update_device(ble_device)
         except Exception as err:  # noqa: BLE001 - never let polling kill the entry
             _LOGGER.warning("Unable to poll %s: %s; keeping last known data", address, err)
             return device.ble_data
