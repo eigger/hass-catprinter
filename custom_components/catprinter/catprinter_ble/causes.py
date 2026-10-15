@@ -13,8 +13,6 @@ from blesession import (
     SessionDropped,
     WriteTimeout,
     generic_cause,
-    placement,
-    stages,
 )
 
 from .errors import CatPrinterError, ErrorCode, PrinterError
@@ -43,13 +41,14 @@ _CODE_CAUSES = {
         "a weak link can cause this too."
     ),
     ErrorCode.TIMEOUT: (
-        "The printer did not confirm the job in time. The label may still "
+        "The printer did not confirm the job in time. The image may still "
         "have printed; check paper and the link."
     ),
     ErrorCode.NOT_CONNECTED: "The printer dropped the link during the job.",
 }
 
 _FALLBACK_CAUSE = "The session failed before the first stage was reached; see error."
+
 
 
 def printer_cause(failure: Failure, operation: str) -> str | None:
@@ -63,13 +62,6 @@ def printer_cause(failure: Failure, operation: str) -> str | None:
         return None
     if isinstance(exc, CatPrinterError) and exc.code in _CODE_CAUSES:
         return _CODE_CAUSES[exc.code]
-    if failure.stage == stages.CONNECT and operation == "poll":
-        advice = placement(failure.facts, noun="printer")
-        return (
-            "The printer could not be reached for a status poll. It is often off or "
-            "asleep between jobs, so this on its own is normal; a print that fails the "
-            f"same way means it is out of range or the adapter / proxy is down.{advice}"
-        )
     return None
 
 
@@ -84,10 +76,14 @@ def cause(failure: Failure, operation: str) -> str | None:
     if text is not None:
         return text
     shared = generic_cause(
-        failure.stage or failure.detail,
+        failure.stage,
         failure.error,
         failure.facts,
         exc=failure.exc,
         noun="printer",
     )
-    return None if shared is not None else _FALLBACK_CAUSE
+    if shared is not None:
+        return None
+    if failure.stage:
+        return f"The session failed during the {failure.stage} stage; see error."
+    return _FALLBACK_CAUSE

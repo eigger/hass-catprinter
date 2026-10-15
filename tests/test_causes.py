@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from blesession import (
-    ConnectFailed,
     SessionReports,
     SessionTrace,
     WriteTimeout,
@@ -59,14 +58,24 @@ def test_library_sentence_wins_for_a_hung_write():
     assert report["likely_cause_key"]
 
 
-def test_poll_that_cannot_connect_reads_as_asleep():
-    report = _report(ConnectFailed("asleep"), operation="poll", stage_name="connect")
-    assert "off or asleep" in report["likely_cause"]
+def test_unknown_failure_in_a_stage_names_the_stage():
+    report = _report(RuntimeError("boom"), stage_name="raster")
+    assert "transfer stage" in report["likely_cause"]
+    assert "likely_cause_key" not in report
 
 
-def test_unknown_failure_still_gets_a_sentence():
-    report = _report(RuntimeError("boom"), stage_name="subscribe")
-    assert report["likely_cause"]
+def test_other_codes_are_worded():
+    for code in (
+        ErrorCode.UNKNOWN_DEVICE,
+        ErrorCode.UNSUPPORTED_DEVICE,
+        ErrorCode.SERVICE_NOT_FOUND,
+        ErrorCode.NOT_CONNECTED,
+    ):
+        assert _report(CatPrinterError(code, "x"))["likely_cause"]
+
+
+def test_unrecognised_printer_fault_names_the_status():
+    assert "sparkles" in _report(PrinterError("sparkles"))["likely_cause"]
 
 
 def test_print_failure_is_kept_after_a_later_success():
