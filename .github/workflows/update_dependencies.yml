@@ -126,6 +126,7 @@ jobs:
           # The daily run recomputes the same bump; do not push an identical
           # tree again (it would only re-trigger CI and rewrite the PR's history).
           pushed=true
+          created=false
           if git fetch --quiet origin "${branch}" 2>/dev/null \
             && git diff --quiet "origin/${branch}" HEAD; then
             echo "Branch ${branch} is already up to date"
@@ -146,11 +147,13 @@ jobs:
             echo "::error::Failed to create pull request. In repository Settings > Actions > General, enable 'Allow GitHub Actions to create and approve pull requests'."
             echo "Branch was pushed. Open a PR manually: https://github.com/${GITHUB_REPOSITORY}/compare/main...${branch}?expand=1"
             exit 1
+          else
+            created=true
           fi
 
           # Events caused by GITHUB_TOKEN do not start other workflows, so the
           # bump PR would carry no test results. Start them explicitly.
-          if [ "${pushed}" = "true" ]; then
+          if [ "${pushed}" = "true" ] || [ "${created}" = "true" ]; then
             gh workflow run tests.yml --ref "${branch}" \
               || echo "::warning::Could not start the Tests workflow on ${branch}"
           fi
