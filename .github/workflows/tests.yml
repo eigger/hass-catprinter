@@ -1,79 +1,38 @@
 name: Tests
-
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
   workflow_dispatch:
-
+  schedule:
+    - cron: "23 4 * * 1"
+permissions:
+  contents: read
 concurrency:
-  group: tests-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: Install ruff
-        run: pip install ruff==0.17.1
-
-      - name: Lint
-        run: python -m ruff check custom_components/ tests/
-
-  test:
-    runs-on: ubuntu-latest
-    needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        # imagespec>=1.0.0 requires Python >=3.13.
-        python-version: ["3.13", "3.14"]
-        # latest: whatever the manifest's ">=" resolves to today, so a new
-        # release that breaks us is caught. minimum: the floor the manifest
-        # promises, so raising a call beyond it does not go unnoticed.
-        deps: [latest, minimum]
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python ${{ matrix.python-version }} (${{ matrix.deps }} deps)
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install pytest pytest-asyncio bleak
-          python -c "import json; print('\n'.join(json.load(open('custom_components/catprinter/manifest.json'))['requirements']))" > requirements.txt
-          pip install -r requirements.txt
-          if [ "${{ matrix.deps }}" = "minimum" ]; then
-          python - <<'PY' > requirements_min.txt
-          import json
-          import re
-          requirements = json.load(open("custom_components/catprinter/manifest.json"))["requirements"]
-          for requirement in requirements:
-              match = re.fullmatch(r"([A-Za-z0-9_.-]+(?:\[[^\]]*\])?)>=([0-9][0-9.]*)", requirement)
-              assert match, f"unsupported requirement form: {requirement}"
-              print(f"{match.group(1)}=={match.group(2)}")
-          PY
-          pip install --force-reinstall -r requirements_min.txt
-          python - <<'PY'
-          from importlib.metadata import version
-          for line in open("requirements_min.txt").read().split():
-              name, expected = line.split("==")
-              name = name.split("[")[0]
-              assert version(name) == expected, (name, version(name), expected)
-          PY
-          fi
-          pip list | grep -i -E 'blesession|imagespec|bleak'
-
-      - name: Run tests
-        run: |
-          python -m pytest tests/ -v
+  current:
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@78d242092eac732a1af48770e77e3f51e566c6c2 # reviewed standards commit
+    with:
+      domain: catprinter
+      python-versions: '["3.14"]'
+      lint-python-version: '3.14'
+      requirements: requirements_test.txt
+      expected-ha-version: '2026.10.2'
+      test-profile: ha
+      ha-components: 'bluetooth recorder image sensor binary_sensor'
+      dependency-modes: '["current", "minimum"]'
+      minimum-packages: '["imagespec", "blesession"]'
+  minimum-ha:
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@78d242092eac732a1af48770e77e3f51e566c6c2 # reviewed standards commit
+    with:
+      domain: catprinter
+      python-versions: '["3.13"]'
+      lint-python-version: '3.14'
+      requirements: requirements_test_min.txt
+      expected-ha-version: '2025.2.0'
+      test-profile: ha
+      ha-components: 'bluetooth recorder image sensor binary_sensor'
+      dependency-modes: '["current", "minimum"]'
+      minimum-packages: '["imagespec", "blesession"]'

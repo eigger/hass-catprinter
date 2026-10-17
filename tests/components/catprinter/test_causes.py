@@ -12,9 +12,13 @@ from blesession import (
     stages,
 )
 
-from catprinter_ble.causes import cause
-from catprinter_ble.device import STAGE_MAP
-from catprinter_ble.errors import CatPrinterError, ErrorCode, PrinterError
+from custom_components.catprinter.catprinter_ble.causes import cause
+from custom_components.catprinter.catprinter_ble.device import STAGE_MAP
+from custom_components.catprinter.catprinter_ble.errors import (
+    CatPrinterError,
+    ErrorCode,
+    PrinterError,
+)
 
 
 def _report(exc, operation="print", stage_name=None):
@@ -88,10 +92,13 @@ def test_print_failure_is_kept_after_a_later_success():
     assert reports.of("print")["success"] is True
 
 
-
 def test_silent_status_query_is_not_blamed_on_the_session_start():
     from blesession import NotificationTimeout
 
-    report = _report(NotificationTimeout(5, step="query_state"), operation="poll", stage_name="query_state")
+    report = _report(
+        NotificationTimeout(5, step="query_state"),
+        operation="poll",
+        stage_name="query_state",
+    )
     assert "did not answer (query_state)" in report["likely_cause"]
     assert "likely_cause_key" not in report

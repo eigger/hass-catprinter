@@ -74,7 +74,9 @@ class CatPrinterClient:
     ) -> None:
         self._client = client
         self._profile = profile
-        self._interval = (interval_ms if interval_ms is not None else profile.interval_ms) / 1000
+        self._interval = (
+            interval_ms if interval_ms is not None else profile.interval_ms
+        ) / 1000
         self._packet_size_cap = packet_size_cap
         self._packet_size = 20
         self._write_uuid: str | None = None
@@ -131,7 +133,9 @@ class CatPrinterClient:
         self._parser = FrameParser()
         self._flow_ok.set()
         if self._notify_uuid:
-            await start_notify_with_recovery(self._client, self._notify_uuid, self._on_notify)
+            await start_notify_with_recovery(
+                self._client, self._notify_uuid, self._on_notify
+            )
 
     async def stop(self) -> None:
         """Unsubscribe. Safe to call more than once, and after a failed start."""
@@ -156,7 +160,11 @@ class CatPrinterClient:
     # ------------------------------------------------------------------
 
     async def send(
-        self, data: bytes, on_progress: ProgressFn | None = None, *, step: str = "raster"
+        self,
+        data: bytes,
+        on_progress: ProgressFn | None = None,
+        *,
+        step: str = "raster",
     ) -> None:
         """Push ``data`` in packet-sized chunks, honouring flow control.
 
@@ -261,7 +269,9 @@ class CatPrinterClient:
     async def query_state(self, *, required: bool = True) -> DeviceState | None:
         """Ask for the status. A silent printer raises ``NotificationTimeout``
         unless ``required`` is False, which returns None instead."""
-        return await self._query(CMD_GET_STATE, cmd_get_state(), "query_state", required)
+        return await self._query(
+            CMD_GET_STATE, cmd_get_state(), "query_state", required
+        )
 
     async def query_info(self, *, required: bool = True) -> DeviceInfo | None:
         return await self._query(CMD_GET_INFO, cmd_get_info(), "query_info", required)

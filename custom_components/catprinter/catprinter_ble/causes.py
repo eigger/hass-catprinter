@@ -55,7 +55,9 @@ def printer_cause(failure: Failure, operation: str) -> str | None:
     """The printer's own reading of a failure, or None where the shared one fits."""
     exc = failure.exc
     if isinstance(exc, PrinterError):
-        return _PRINTER_FAULTS.get(exc.status, f"The printer reported a fault: {exc.status}.")
+        return _PRINTER_FAULTS.get(
+            exc.status, f"The printer reported a fault: {exc.status}."
+        )
     # Link-level failures the library already words precisely (a hung write,
     # a dropped link, a missing characteristic): its sentence and key win.
     if isinstance(exc, (WriteTimeout, SessionDropped, GattMismatch)):

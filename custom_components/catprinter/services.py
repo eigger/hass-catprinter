@@ -17,7 +17,8 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 
 from .catprinter_ble import CatPrinterDevice
 from .const import DOMAIN, EXPECTED_ERRORS
@@ -44,7 +45,10 @@ def async_setup_services(hass: HomeAssistant) -> None:
             await _feed_on_entry(hass, entry, int(service.data.get("dots", 96)))
 
     hass.services.async_register(
-        DOMAIN, SERVICE_PRINT, print_service, supports_response=SupportsResponse.OPTIONAL
+        DOMAIN,
+        SERVICE_PRINT,
+        print_service,
+        supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(DOMAIN, SERVICE_FEED, feed_service)
 
@@ -146,7 +150,8 @@ def _resolve_target_entries(
 ) -> list[CatPrinterConfigEntry]:
     """Work out which loaded printers a service call is aimed at."""
     loaded: dict[str, CatPrinterConfigEntry] = {
-        entry.entry_id: entry for entry in hass.config_entries.async_loaded_entries(DOMAIN)
+        entry.entry_id: entry
+        for entry in hass.config_entries.async_loaded_entries(DOMAIN)
     }
     if not loaded:
         raise ServiceValidationError("No cat printer is configured")

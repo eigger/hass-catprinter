@@ -1,159 +1,69 @@
 # hass-catprinter
 
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?logo=home-assistant)](https://hacs.xyz/)
-[![License](https://img.shields.io/github/license/eigger/hass-catprinter)](https://github.com/eigger/hass-catprinter/blob/main/LICENSE)
+<!-- hass-standards:badges:start -->
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#installation)
+[![Release](https://img.shields.io/github/v/release/eigger/hass-catprinter?style=flat-square)](https://github.com/eigger/hass-catprinter/releases)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.2.0-41BDF5?style=flat-square)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-catprinter/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-catprinter/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-catprinter?style=flat-square)](LICENSE)
+[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.catprinter.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
+<!-- hass-standards:badges:end -->
 
-Home Assistant integration for the cheap Bluetooth "cat" thermal printers
-(GB01/GB02/GB03, GT01, X5/X6/X7 and the many rebrands) that speak the
-`51 78` protocol.
+**English** | [한국어](README.ko.md)
 
-Works over Home Assistant's Bluetooth stack, including ESPHome Bluetooth proxies.
+A HACS custom integration that prints text, QR codes and images on inexpensive Bluetooth thermal “cat” printers using Home Assistant's Bluetooth stack and ESPHome proxies.
 
-## Gallery
+## Features and requirements
 
-| X6h |
-| :---: |
-| <img src="https://raw.githubusercontent.com/eigger/hass-catprinter/main/docs/images/x6h.jpg" width="300" alt="X6h cat printer with a printed cat"> |
-
-## Supported models
-
-Any printer advertising as `<model>-XXXX` where `<model>` is in
-[`models_data.py`](custom_components/catprinter/catprinter_ble/models_data.py)
-(125 models, 1"–3" heads) is picked up automatically with that model's
-MTU / pacing / heat settings.
-
-| Status | Models |
-|---|---|
-| ✅ Confirmed | **X6h** (firmware 3.0.5D) — local adapter and ESPHome Bluetooth proxy |
-| 🟡 Untested, same protocol | GB01, GB02, GB03(+SH/PH/PL/SL), GB04–06, GT01–04, X5/X6/X7 (+h/H/HP), X2h, X100–X103, SC03/SC04, LY01–05, P1/P2/P5/P6/P7, PR02/PR07, S101/S102, DY01/DY03, LT01, 58P5, WL01, M2, and the rest of the table |
-| ❌ Not supported | FL01, KF-5, CP01, JRX01, QDX01, RS9000, DY49, SeznikNeo, WJ-HOT-PRT, wts07, XiaoWa — these require a per-model `D1` secret. YMS-BT01 — different flow control. 4"/8" (A4) and Wi-Fi models — different data path. |
-
-> **About the "h" models (X5h/X6h/X7h, P7, …):** these are usually driven over
-> Bluetooth Classic SPP, which Home Assistant cannot do. They also expose the
-> same protocol over BLE GATT, which is what this integration uses — confirmed
-> on X6h. If yours is in the table but does not respond, please open an issue
-> with the advertised name.
-
-Case matters in names: `X6h` and `X6H` are different models with different
-heat settings, and the integration matches them separately.
+- `catprinter.print` renders [imagespec](https://github.com/eigger/imagespec) layouts; `catprinter.feed` advances paper. Status, battery, last image and session diagnostics are exposed as entities.
+- Existing hardware confirmation: **X6h, firmware 3.0.5D**, with a local adapter and ESPHome proxy. Other protocol profiles are **untested**; see [models and limitations](docs/user-guide.md#supported-models).
+- Home Assistant **2025.2.0+**, a supported BLE printer and a working HA Bluetooth adapter or proxy. A proxy needs GATT connections enabled. Keep the printer awake and disconnect other apps before printing.
 
 ## Installation
 
-1. Add this repository to HACS as a custom repository (category *Integration*),
-   or copy `custom_components/catprinter` into your `custom_components/`.
+1. Add `https://github.com/eigger/hass-catprinter` to **HACS → Custom repositories → Integration**, or copy `custom_components/catprinter` into your HA configuration's `custom_components/` directory.
 2. Restart Home Assistant.
-3. **Settings → Devices & services** — the printer should be discovered when it
-   is on. Otherwise **Add integration → Cat Printer** lists visible printers, and
-   falls through to a manual step (address + model) if none is recognised.
+3. Open **Settings → Devices & services** and confirm the discovered printer, or choose **Add integration → Cat Printer**. If no supported printer is discovered, enter its address and model manually.
 
-Do not pair the printer in your phone's Bluetooth settings while testing; only
-one central can be connected at a time.
+Prepare your proxy using [shared Bluetooth settings and recommended hardware (Korean)](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md), including XIAO W5500 V1.2 and the USB-A dongle-form M5Stack AtomS3U. This is general guidance, not a claim that each board was tested with this printer.
 
-## Entities
+## Quick start
 
-| Entity | Category | Source |
-|---|---|---|
-| `sensor.*_status` | | `ok` / `printing` / `out_of_paper` / `cover_open` / `overheating` |
-| `binary_sensor.*_out_of_paper`, `cover_open`, `overheating` | | status bits |
-| `binary_sensor.*_printing` | | live |
-| `image.*_last_print` | | what was last rendered |
-| `sensor.*_battery` | diagnostic | `A3` reply, decoded per the model's battery scheme |
-| `sensor.*_conditions` | diagnostic | every active status bit, comma-separated |
-| `sensor.*_print_duration` | diagnostic | last / current job; attributes carry the last print's BLE session breakdown (radio, per-stage timings, `likely_cause` on failure) |
-| `sensor.*_last_failure` | diagnostic | when a BLE session last failed; attributes explain it (`failed_stage`, `error`, `likely_cause`, radio) and are kept until the next failure |
-| `sensor.*_error_count` | diagnostic | failed sessions since the entry was loaded (a status poll that cannot reach a sleeping printer is not counted) |
-| `sensor.*_label_sensor` | diagnostic, disabled by default | raw label sensor byte |
-| `binary_sensor.*_low_battery`, `charging` | diagnostic | status bits |
-| `binary_sensor.*_connection` | diagnostic | live |
-
-## Services
-
-### `catprinter.print`
-
-Payload format: [imagespec](https://pypi.org/project/imagespec/).
-#### Printing text or generate and print a qrcode (`text` / `qrcode`)
-```yaml
-service: catprinter.print
-target:
-  device_id: <your printer>
-data:
-  payload:
-    - type: text
-      value: "{{ states('sensor.outdoor_temperature') }} °C"
-      x: 8
-      y: 8
-      size: 40
-    - type: qrcode
-      data: https://www.home-assistant.io
-      x: 8
-      y: 64
-      size: 120
-  height: 200
-  mode: image      # image | text (hotter, crisper profile)
-  density: 4       # 1-7, 4 = default, ±15 % energy per step
-  feed: 96         # dots to advance after the last row
-```
-
-Optional raw overrides: `energy` (heater energy, 0–65535), `speed` (per-row
-delay, smaller is faster), `copies`, `rotate`, `preview`. Canvas width is
-always the print head width (384 px on 2" models); only `height` is yours.
-The response contains the rendered PNG as a data URL plus the energy/speed used.
-
-#### Printing an image from a URL (`dlimg`)
-
-To download, process, and print an image directly from the web, use the `dlimg` payload type:
+From **Developer tools → Actions**, select your printer device:
 
 ```yaml
 action: catprinter.print
 target:
-  device_id: <your printer>
+  device_id: YOUR_PRINTER_DEVICE_ID
 data:
-  feed: 0
-  density: 3
-  mode: image
   payload:
-    - type: dlimg
-      url: https://example.org/image.jpg
-      x: 10
-      y: 10
-      xsize: 312
-      ysize: 312
-      dither: atkinson
-  height: 332
+    - type: text
+      value: Hello Home Assistant!
+      x: 8
+      y: 8
+      size: 40
+  height: 80
 ```
-**Notes:**
-- Replace `https://example.org/image.jpg` with the direct URL to your image file.
-- The `height` parameter currently needs to be adjusted manually to match the total height of your print job (e.g., `y` + `ysize` + padding) so that paper feeds correctly at the end.
 
-### `catprinter.feed`
+## Important limits
 
-Advance the paper by `dots` rows (8 dots ≈ 1 mm at 203 dpi).
+Model names are case-sensitive (`X6h` differs from `X6H`). A discovered advertisement does not prove GATT printing works. Models requiring a vendor `D1` secret, incompatible flow control, A4 and Wi-Fi printers are unsupported; Bluetooth Classic SPP is not used. Close phone/vendor app connections; load paper and close the cover. This adoption does not include new physical-printer or HA frontend checks.
 
-## Tuning
+## Documentation
 
-**Configure** on the integration exposes:
+| Topic | English | 한국어 |
+|---|---|---|
+| Models, entities, actions, examples and tuning | [User guide](docs/user-guide.md) | [사용 안내](docs/ko/user-guide.md) |
+| Power, connection, paper and session failures | [Troubleshooting](docs/troubleshooting.md) | [문제 해결](docs/ko/troubleshooting.md) |
+| Real HA tests, dependencies and contribution | [Development (Korean)](docs/development.md) | [개발 안내](docs/development.md) |
+| Frame format, CRC and model profiles | [Protocol](docs/protocol.md) | [프로토콜 원문 (영어)](docs/protocol.md) |
+| Adopted standard and verification evidence | [Standards (Korean)](STANDARDS.md) | [적용 체크리스트](ADOPTION_CHECKLIST.md) |
 
-- *Status poll interval* — minutes between battery/status reads (default 15).
-  Measured on X6h: the printer stays on and connectable for at least an hour
-  idle, and drops an idle BLE link after about 8 minutes, so polling is a
-  short connect–query–disconnect rather than a held connection.
+The Usage badge counts installations participating in HA Analytics, not all installations or people. Missing data or a failed request does not mean zero installs.
 
-- *Packet interval* — pause between BLE writes; 0 is automatic: the profile
-  value for your model (2–6 ms) on a local adapter, 20 ms through an ESPHome
-  Bluetooth proxy. Raise if prints show missing bands.
-- *Maximum packet size* — cap regardless of negotiated MTU. Through an ESPHome
-  proxy it is capped at 100 bytes automatically; an ESP32 drops
-  write-without-response packets when fed full-size ones every few ms, which
-  shows up as garbage bands or a print that stops early.
+## Support and license
 
-## Protocol
+Report bugs in [Issues](https://github.com/eigger/hass-catprinter/issues) with sanitized evidence from the troubleshooting guide. Use [Discussions](https://github.com/eigger/hass-catprinter/discussions) for questions and ideas.
 
-See [docs/protocol.md](docs/protocol.md): frame format, CRC, commands, row
-encoding, status decoding, print sequence and the profile table layout.
-
-`tools/probe.py` checks whether a printer answers over GATT;
-`tools/print_test.py` prints a test strip without Home Assistant.
-
-## License
-
-MIT
+Released under the [MIT License](LICENSE).

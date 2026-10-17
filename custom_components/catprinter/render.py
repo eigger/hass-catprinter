@@ -63,7 +63,9 @@ def render_image(entity_id, service, hass, width: int = 384):
             rotate_mode="canvas",
             background=service.data.get("background", "white"),
             dither=False,
-            context=_make_context(hass, default_font="ppb.ttf", palette=["black", "white"]),
+            context=_make_context(
+                hass, default_font="ppb.ttf", palette=["black", "white"]
+            ),
         )
     except RenderError as err:
         raise HomeAssistantError(str(err)) from err

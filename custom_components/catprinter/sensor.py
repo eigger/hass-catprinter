@@ -22,9 +22,9 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
+from .catprinter_ble import BLEData, CatPrinterDevice
 from .data import CatPrinterConfigEntry
 from .entity import build_device_info, device_name
-from .catprinter_ble import BLEData, CatPrinterDevice
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -186,7 +186,9 @@ class CatPrinterPrintDurationSensor(
         return attrs
 
 
-class _SessionReportSensor(CoordinatorEntity[DataUpdateCoordinator[BLEData]], SensorEntity):
+class _SessionReportSensor(
+    CoordinatorEntity[DataUpdateCoordinator[BLEData]], SensorEntity
+):
     """Base for sensors that follow ``device.reports`` rather than the poll."""
 
     _attr_has_entity_name = True

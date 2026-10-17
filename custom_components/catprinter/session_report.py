@@ -8,6 +8,7 @@ sentences are in ``catprinter_ble.causes``).
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Any
 
 from blesession import SessionTrace, build_report
@@ -42,3 +43,25 @@ def build_session_report(
         cause=lambda failure: cause(failure, operation),
         noun="printer",
     )
+
+
+_ADDRESS = re.compile(
+    r"(?<![0-9a-f])(?:[0-9a-f]{2}[:_-]){5}[0-9a-f]{2}(?![0-9a-f])",
+    re.IGNORECASE,
+)
+
+
+def redact_addresses(value: str) -> str:
+    """Remove full Bluetooth addresses, including BlueZ device paths."""
+    return _ADDRESS.sub("**REDACTED**", value)
+
+
+def redact_report(value):
+    """Sanitize nested session attributes before publishing them in HA."""
+    if isinstance(value, str):
+        return redact_addresses(value)
+    if isinstance(value, dict):
+        return {key: redact_report(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [redact_report(item) for item in value]
+    return value

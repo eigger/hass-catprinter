@@ -105,9 +105,24 @@ class DeviceProfile:
 
 def _from_row(row: tuple) -> DeviceProfile:
     (
-        model_no, prefix, width, dpi, mtu, can_change_mtu, interval,
-        img_speed, text_speed, e_thin, e_mid, e_deep, e_text,
-        rle, paper_num, battery_model, spp, reason,
+        model_no,
+        prefix,
+        width,
+        dpi,
+        mtu,
+        can_change_mtu,
+        interval,
+        img_speed,
+        text_speed,
+        e_thin,
+        e_mid,
+        e_deep,
+        e_text,
+        rle,
+        paper_num,
+        battery_model,
+        spp,
+        reason,
     ) = row
     return DeviceProfile(
         model_id=model_no,

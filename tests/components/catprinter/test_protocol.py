@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from catprinter_ble import protocol as p
+from custom_components.catprinter.catprinter_ble import protocol as p
 
 
 def test_frame_bytes():
@@ -53,7 +53,11 @@ def test_frame_parser_reassembles_split_and_joined_frames():
 
 def test_decoders():
     info = p.decode_info(bytes.fromhex("79 00 03 33 2e 30 2e 35 44 00"))
-    assert info.device_type == "XW00121" and info.firmware == "3.0.5D" and info.wifi_state == 3
+    assert (
+        info.device_type == "XW00121"
+        and info.firmware == "3.0.5D"
+        and info.wifi_state == 3
+    )
 
     state = p.decode_state(bytes.fromhex("00 0d 27"))
     assert state.conditions == () and state.fault is None and state.battery_raw == 0x27
@@ -74,10 +78,16 @@ def test_decoders():
 def test_build_print_job_layout():
     rows = [bytes(48)] * 250
     job = p.build_print_job(rows, 384, p.JobParams(energy=5000, speed=10, feed_dots=96))
-    assert job.startswith(p.cmd_quality(3) + p.cmd_energy(5000) + p.cmd_mode("image") + p.cmd_speed(10))
+    assert job.startswith(
+        p.cmd_quality(3) + p.cmd_energy(5000) + p.cmd_mode("image") + p.cmd_speed(10)
+    )
     assert job.endswith(p.cmd_speed(25) + p.cmd_feed(48) * 2 + p.cmd_get_state())
     # Speed refreshed once, after row 200.
     assert job.count(p.cmd_speed(10)) == 2
     # No energy frame when the profile has none.
-    job = p.build_print_job(rows[:1], 384, p.JobParams(energy=None, speed=10, feed_dots=0))
-    assert p.CMD_ENERGY not in {job[i + 2] for i in range(0, len(job)) if job[i : i + 2] == p.MAGIC}
+    job = p.build_print_job(
+        rows[:1], 384, p.JobParams(energy=None, speed=10, feed_dots=0)
+    )
+    assert p.CMD_ENERGY not in {
+        job[i + 2] for i in range(0, len(job)) if job[i : i + 2] == p.MAGIC
+    }

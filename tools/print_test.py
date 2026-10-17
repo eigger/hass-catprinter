@@ -1,10 +1,10 @@
 """Print a test strip through the catprinter_ble package, no Home Assistant.
 
-    pip install bleak bleak-retry-connector pillow
-    python tools/print_test.py                      # scan by known prefixes
-    python tools/print_test.py D5:D0:0C:A0:2D:5D    # or by address
-    python tools/print_test.py <addr> --text        # text mode profile
-    python tools/print_test.py <addr> --image photo.png
+pip install bleak bleak-retry-connector pillow
+python tools/print_test.py                      # scan by known prefixes
+python tools/print_test.py D5:D0:0C:A0:2D:5D    # or by address
+python tools/print_test.py <addr> --text        # text mode profile
+python tools/print_test.py <addr> --image photo.png
 """
 
 from __future__ import annotations
@@ -18,7 +18,9 @@ from pathlib import Path
 from bleak import BleakScanner
 from PIL import Image, ImageDraw, ImageFont
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "custom_components" / "catprinter"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[1] / "custom_components" / "catprinter")
+)
 
 from catprinter_ble import CatPrinterDevice, find_profile_by_name  # noqa: E402
 
@@ -58,7 +60,10 @@ async def main() -> None:
     ap.add_argument("--feed", type=int, default=None)
     ap.add_argument("-v", action="store_true")
     args = ap.parse_args()
-    logging.basicConfig(level=logging.DEBUG if args.v else logging.INFO, format="%(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.DEBUG if args.v else logging.INFO,
+        format="%(levelname)s %(message)s",
+    )
 
     address = args.address or await find_address()
     if not address:
@@ -67,7 +72,9 @@ async def main() -> None:
     ble_device = await BleakScanner.find_device_by_address(address, timeout=10.0)
     if ble_device is None:
         sys.exit(f"{address} not visible")
-    print(f"device {ble_device.name} -> profile {find_profile_by_name(ble_device.name)}")
+    print(
+        f"device {ble_device.name} -> profile {find_profile_by_name(ble_device.name)}"
+    )
 
     device = CatPrinterDevice(address)
     data = await device.update_device(ble_device)

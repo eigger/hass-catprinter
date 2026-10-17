@@ -8,11 +8,15 @@ from types import SimpleNamespace
 import pytest
 from blesession import NotificationTimeout, WriteTimeout
 
-from catprinter_ble import client as client_mod
-from catprinter_ble import protocol as p
-from catprinter_ble.client import CatPrinterClient
-from catprinter_ble.errors import CatPrinterError, ErrorCode, PrinterError
-from catprinter_ble.models import find_profile_by_name
+from custom_components.catprinter.catprinter_ble import client as client_mod
+from custom_components.catprinter.catprinter_ble import protocol as p
+from custom_components.catprinter.catprinter_ble.client import CatPrinterClient
+from custom_components.catprinter.catprinter_ble.errors import (
+    CatPrinterError,
+    ErrorCode,
+    PrinterError,
+)
+from custom_components.catprinter.catprinter_ble.models import find_profile_by_name
 
 AE30 = "0000ae30-0000-1000-8000-00805f9b34fb"
 AE01 = "0000ae01-0000-1000-8000-00805f9b34fb"
@@ -20,7 +24,12 @@ AE02 = "0000ae02-0000-1000-8000-00805f9b34fb"
 
 
 def reply(cmd: int, payload: bytes) -> bytes:
-    return p.MAGIC + bytes((cmd, 0x01, len(payload), 0)) + payload + bytes((p.crc8(payload), 0xFF))
+    return (
+        p.MAGIC
+        + bytes((cmd, 0x01, len(payload), 0))
+        + payload
+        + bytes((p.crc8(payload), 0xFF))
+    )
 
 
 class FakeClient:
@@ -36,7 +45,9 @@ class FakeClient:
             SimpleNamespace(uuid=AE02, properties=["notify"]),
         ]
         service = SimpleNamespace(uuid=AE30, characteristics=chars)
-        self.services = SimpleNamespace(get_service=lambda u: service if u == AE30 else None)
+        self.services = SimpleNamespace(
+            get_service=lambda u: service if u == AE30 else None
+        )
 
     async def write_gatt_char(self, uuid, data, response=False):
         self.writes.append(bytes(data))
@@ -83,7 +94,9 @@ def test_query_state_roundtrip(printer):
 
 def test_print_job_completes_on_trailing_state_reply(printer):
     fake, c = printer
-    job = p.build_print_job([bytes(48)] * 10, 384, p.JobParams(energy=5000, speed=10, feed_dots=48))
+    job = p.build_print_job(
+        [bytes(48)] * 10, 384, p.JobParams(energy=5000, speed=10, feed_dots=48)
+    )
 
     async def run():
         await c.start()
@@ -100,7 +113,9 @@ def test_print_job_completes_on_trailing_state_reply(printer):
 
 def test_print_job_reports_fault_from_trailing_reply(printer):
     fake, c = printer
-    job = p.build_print_job([bytes(48)] * 2, 384, p.JobParams(energy=None, speed=10, feed_dots=0))
+    job = p.build_print_job(
+        [bytes(48)] * 2, 384, p.JobParams(energy=None, speed=10, feed_dots=0)
+    )
 
     async def run():
         await c.start()
@@ -119,7 +134,9 @@ def test_stall_aborts_instead_of_pushing_on(printer, monkeypatch):
     """Buffer-full with no drain: stop sending, send A6 05, raise STALLED."""
     fake, c = printer
     monkeypatch.setattr(client_mod, "FLOW_RESUME_TIMEOUT", 0.05)
-    job = p.build_print_job([bytes(48)] * 200, 384, p.JobParams(energy=None, speed=10, feed_dots=0))
+    job = p.build_print_job(
+        [bytes(48)] * 200, 384, p.JobParams(energy=None, speed=10, feed_dots=0)
+    )
 
     async def run():
         await c.start()
@@ -140,7 +157,9 @@ def test_stall_aborts_instead_of_pushing_on(printer, monkeypatch):
 def test_flow_control_resumes_after_drain(printer, monkeypatch):
     fake, c = printer
     monkeypatch.setattr(client_mod, "FLOW_RESUME_TIMEOUT", 1.0)
-    job = p.build_print_job([bytes(48)] * 200, 384, p.JobParams(energy=None, speed=10, feed_dots=0))
+    job = p.build_print_job(
+        [bytes(48)] * 200, 384, p.JobParams(energy=None, speed=10, feed_dots=0)
+    )
 
     async def run():
         await c.start()
@@ -163,10 +182,21 @@ def test_flow_control_resumes_after_drain(printer, monkeypatch):
 
 def test_proxy_detection_and_pacing():
     from blesession import is_proxy
-    from catprinter_ble.device import PROXY_INTERVAL_MS, PROXY_PACKET_SIZE, CatPrinterDevice
 
-    local = SimpleNamespace(address="AA", name="X6h-0000", details={"path": "/org/bluez/hci0/dev_AA"})
-    remote = SimpleNamespace(address="AA", name="X6h-0000", details={"source": "00:1A:7D:DA:71:0A", "address_type": 1})
+    from custom_components.catprinter.catprinter_ble.device import (
+        PROXY_INTERVAL_MS,
+        PROXY_PACKET_SIZE,
+        CatPrinterDevice,
+    )
+
+    local = SimpleNamespace(
+        address="AA", name="X6h-0000", details={"path": "/org/bluez/hci0/dev_AA"}
+    )
+    remote = SimpleNamespace(
+        address="AA",
+        name="X6h-0000",
+        details={"source": "00:1A:7D:DA:71:0A", "address_type": 1},
+    )
     assert not is_proxy(local)
     assert is_proxy(remote)
 
@@ -180,7 +210,10 @@ def test_proxy_detection_and_pacing():
 
     dev._proxy = True
     c = dev._make_client(fake, dev.profile)
-    assert c._interval == PROXY_INTERVAL_MS / 1000 and c._packet_size_cap == PROXY_PACKET_SIZE
+    assert (
+        c._interval == PROXY_INTERVAL_MS / 1000
+        and c._packet_size_cap == PROXY_PACKET_SIZE
+    )
 
     dev._interval_ms = 50  # explicit user value wins over the proxy default
     c = dev._make_client(fake, dev.profile)
@@ -236,7 +269,7 @@ def test_hung_write_is_a_write_timeout_not_a_silent_query(printer, monkeypatch):
 
 
 def _device_with(monkeypatch, fake):
-    from catprinter_ble import device as device_mod
+    from custom_components.catprinter.catprinter_ble import device as device_mod
 
     async def connect(*_args, **_kwargs):
         fake.is_connected = True
@@ -252,7 +285,9 @@ def _device_with(monkeypatch, fake):
     monkeypatch.setattr("blesession.session.establish_connection", connect)
     dev = device_mod.CatPrinterDevice("AA:BB:CC:DD:EE:FF", interval_ms=0)
     ble = SimpleNamespace(
-        address="AA:BB:CC:DD:EE:FF", name="X6h-0000", details={"path": "/org/bluez/hci0/dev_AA"}
+        address="AA:BB:CC:DD:EE:FF",
+        name="X6h-0000",
+        details={"path": "/org/bluez/hci0/dev_AA"},
     )
     return dev, ble
 
@@ -330,7 +365,7 @@ def test_feed_survives_a_failed_status_read(monkeypatch):
 
 
 def test_stuck_disconnect_is_bounded_and_link_dropped(monkeypatch):
-    import catprinter_ble.device as device_mod
+    import custom_components.catprinter.catprinter_ble.device as device_mod
 
     monkeypatch.setattr(device_mod, "DISCONNECT_TIMEOUT_S", 0.05)
     fake = FakeClient()
@@ -348,7 +383,7 @@ def test_stuck_disconnect_is_bounded_and_link_dropped(monkeypatch):
 def test_stalled_print_is_reported_once_with_the_diagnosed_fault(monkeypatch):
     from PIL import Image
 
-    from catprinter_ble.errors import PrinterError as PE
+    from custom_components.catprinter.catprinter_ble.errors import PrinterError as PE
 
     monkeypatch.setattr(client_mod, "WRITE_TIMEOUT", 0.05)
     monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
@@ -515,7 +550,7 @@ def test_kept_link_is_dropped_after_a_hung_write(monkeypatch):
 def test_diagnosis_after_a_stall_is_bounded(monkeypatch):
     from PIL import Image
 
-    import catprinter_ble.device as device_mod
+    import custom_components.catprinter.catprinter_ble.device as device_mod
 
     monkeypatch.setattr(client_mod, "WRITE_TIMEOUT", 0.05)
     monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
@@ -552,14 +587,16 @@ def test_diagnosis_after_a_stall_is_bounded(monkeypatch):
 
     asyncio.run(run())
     assert [op for op, _ in reports] == ["print"]
-    assert isinstance(reports[0][1], WriteTimeout)  # the stall, not the failed diagnosis
+    assert isinstance(
+        reports[0][1], WriteTimeout
+    )  # the stall, not the failed diagnosis
     assert dev.is_printing is False
 
 
 def test_hung_kept_link_with_stuck_disconnect_still_reports(monkeypatch):
     from PIL import Image
 
-    import catprinter_ble.device as device_mod
+    import custom_components.catprinter.catprinter_ble.device as device_mod
 
     monkeypatch.setattr(client_mod, "WRITE_TIMEOUT", 0.05)
     monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
@@ -594,7 +631,9 @@ def test_feed_with_a_hung_status_read_closes_the_kept_link_and_succeeds(monkeypa
     dev, ble = _device_with(monkeypatch, fake)
     dev.keep_connection = True
     traces = []
-    dev.callback_session = lambda op, trace, outcome: traces.append((op, trace, outcome))
+    dev.callback_session = lambda op, trace, outcome: traces.append(
+        (op, trace, outcome)
+    )
     orig = fake.write_gatt_char
 
     async def write(uuid, data, response=False):
@@ -606,7 +645,7 @@ def test_feed_with_a_hung_status_read_closes_the_kept_link_and_succeeds(monkeypa
     asyncio.run(dev.feed(ble, 48))
     assert dev.client is None
     assert fake.disconnects == 1
-    (op, trace, outcome), = traces
+    ((op, trace, outcome),) = traces
     assert op == "feed" and outcome is None and trace.failed_stage is None
 
 
@@ -643,7 +682,9 @@ def test_stop_failing_after_a_stall_is_reported_once(monkeypatch):
     assert len(reports) == 1 and isinstance(reports[0][1], RuntimeError)
 
 
-def test_switching_keep_connection_off_mid_operation_still_leaves_a_closable_link(monkeypatch):
+def test_switching_keep_connection_off_mid_operation_still_leaves_a_closable_link(
+    monkeypatch,
+):
     """Unload flips the option while a job runs; the link must stay reachable."""
     monkeypatch.setattr(client_mod, "QUERY_TIMEOUT", 0.05)
     fake = FakeClient()
@@ -677,7 +718,9 @@ def test_close_waits_for_a_running_operation_then_closes_the_link(monkeypatch):
 
         task = asyncio.ensure_future(job())
         await asyncio.sleep(0.02)
-        assert await dev.close(0.05) is False  # still running: caller schedules the rest
+        assert (
+            await dev.close(0.05) is False
+        )  # still running: caller schedules the rest
         assert dev.keep_connection is False
         closer = asyncio.ensure_future(dev.close_when_idle())
         release.set()

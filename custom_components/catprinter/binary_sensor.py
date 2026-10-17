@@ -23,9 +23,9 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
+from .catprinter_ble import BLEData, CatPrinterDevice
 from .data import CatPrinterConfigEntry
 from .entity import build_device_info, device_name
-from .catprinter_ble import BLEData, CatPrinterDevice
 
 _LOGGER = logging.getLogger(__name__)
 

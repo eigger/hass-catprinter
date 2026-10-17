@@ -15,7 +15,7 @@ from homeassistant.components.bluetooth import (
 from homeassistant.config_entries import (
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlowWithReload,
+    OptionsFlow,
 )
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import callback
@@ -69,7 +69,10 @@ def _model_selector() -> SelectSelector:
 SETUP_SCHEMA = {
     vol.Required(CONF_POLL_MINUTES, default=DEFAULT_POLL_MINUTES): NumberSelector(
         NumberSelectorConfig(
-            min=1, max=1440, step=1, mode=NumberSelectorMode.BOX,
+            min=1,
+            max=1440,
+            step=1,
+            mode=NumberSelectorMode.BOX,
             unit_of_measurement="minutes",
         )
     ),
@@ -79,13 +82,19 @@ SETUP_SCHEMA = {
 TUNING_SCHEMA = {
     vol.Required(CONF_INTERVAL_MS, default=DEFAULT_INTERVAL_MS): NumberSelector(
         NumberSelectorConfig(
-            min=0, max=200, step=1, mode=NumberSelectorMode.BOX,
+            min=0,
+            max=200,
+            step=1,
+            mode=NumberSelectorMode.BOX,
             unit_of_measurement="milliseconds",
         )
     ),
     vol.Required(CONF_PACKET_SIZE_CAP, default=DEFAULT_PACKET_SIZE_CAP): NumberSelector(
         NumberSelectorConfig(
-            min=20, max=509, step=1, mode=NumberSelectorMode.BOX,
+            min=20,
+            max=509,
+            step=1,
+            mode=NumberSelectorMode.BOX,
             unit_of_measurement="bytes",
         )
     ),
@@ -122,8 +131,9 @@ class CatPrinterConfigFlow(ConfigFlow, domain=DOMAIN):
 
         name = _advertised_name(discovery_info)
         _LOGGER.debug(
-            "Discovered %r (%s), service UUIDs %s",
-            name, discovery_info.address, discovery_info.service_uuids,
+            "Discovered printer profile %r, service UUIDs %s",
+            name,
+            discovery_info.service_uuids,
         )
         profile = find_profile_by_name(name)
         if profile is None:
@@ -171,7 +181,11 @@ class CatPrinterConfigFlow(ConfigFlow, domain=DOMAIN):
             if profile is None:
                 continue
             if not profile.supported:
-                _LOGGER.info("Ignoring %s (%s): %s", name, address, profile.unsupported_reason)
+                _LOGGER.info(
+                    "Ignoring unsupported printer %s: %s",
+                    name,
+                    profile.unsupported_reason,
+                )
                 continue
             self._discovered_devices[address] = Discovery(name, discovery_info)
 
@@ -184,7 +198,9 @@ class CatPrinterConfigFlow(ConfigFlow, domain=DOMAIN):
         }
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema({vol.Required(CONF_ADDRESS): vol.In(titles)} | SETUP_SCHEMA),
+            data_schema=vol.Schema(
+                {vol.Required(CONF_ADDRESS): vol.In(titles)} | SETUP_SCHEMA
+            ),
         )
 
     async def async_step_manual(
@@ -236,7 +252,7 @@ class CatPrinterConfigFlow(ConfigFlow, domain=DOMAIN):
         return OptionsFlowHandler()
 
 
-class OptionsFlowHandler(OptionsFlowWithReload):
+class OptionsFlowHandler(OptionsFlow):
     """Handle option updates."""
 
     async def async_step_init(

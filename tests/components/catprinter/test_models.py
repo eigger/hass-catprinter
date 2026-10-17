@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from catprinter_ble import models as m
+from custom_components.catprinter.catprinter_ble import models as m
 
 
 def test_case_sensitive_prefix_first():
@@ -30,7 +30,11 @@ def test_x6h_profile_values():
 def test_feed_step_follows_dpi():
     assert m.find_profile_by_name("X6h-0000").feed_step == 48
     p5 = m.find_profile_by_name("P5-0000")
-    assert p5.dpi == 300 and p5.feed_step == 72 and p5.default_feed_dots == p5.paper_num * 72
+    assert (
+        p5.dpi == 300
+        and p5.feed_step == 72
+        and p5.default_feed_dots == p5.paper_num * 72
+    )
 
 
 def test_zero_energy_means_no_command():

@@ -11,6 +11,8 @@ with a per-model key, "window" for YMS-BT01's credit scheme.
 
 from __future__ import annotations
 
+# Keep the vendor catalog in one tuple per row for review.
+# fmt: off
 MODELS: tuple[tuple, ...] = (
     ('0019B-C', '0019B-C-', 384, 200, 180, True, 4, 10, 10, 5000, 5000, 5000, 8000, True, 2, 1, True, ''),
     ('0019B-D', '0019B-D-', 384, 200, 180, True, 4, 10, 10, 5000, 5000, 5000, 8000, True, 2, 1, True, ''),
@@ -138,3 +140,5 @@ MODELS: tuple[tuple, ...] = (
     ('YMS-BT01', 'YMS-BT01-', 384, 200, 183, True, 4, 20, 10, 5000, 5000, 5000, 5000, False, 2, 1, False, 'window'),
     ('ZHHC', 'ZHHC-', 384, 200, 123, False, 4, 10, 10, 9000, 9000, 9000, 0, True, 2, 0, False, ''),
 )
+
+# fmt: on
