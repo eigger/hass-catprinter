@@ -2,7 +2,7 @@
 
 [Home](../README.md) | [한국어](ko/troubleshooting.md)
 
-Start with the [shared Bluetooth connection checklist and recommended proxy hardware (Korean)](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md#연결-문제-확인-순서). Proxy firmware settings and Cat Printer integration options are separate. The shared guide includes XIAO W5500 Ethernet Adapter **V1.2** (Ethernet/PoE/external antenna) and **M5Stack AtomS3U**, a USB-A dongle-form device, with purchase links. These are shared recommendations, not newly verified printer/board combinations.
+Start with the [Bluetooth proxy setup](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md#troubleshooting). Proxy firmware settings and Cat Printer integration options are separate. The shared guide includes XIAO W5500 Ethernet Adapter **V1.2** (Ethernet/PoE/external antenna) and **M5Stack AtomS3U**, a USB-A dongle-form device, with purchase links. These are shared recommendations, not newly verified printer/board combinations.
 
 ## 1. Prepare this printer
 

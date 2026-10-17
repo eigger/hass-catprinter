@@ -26,7 +26,7 @@ Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Blue
 2. Home Assistant를 재시작합니다.
 3. **설정 → 기기 및 서비스**에서 발견한 프린터를 확인하거나 **통합 추가 → Cat Printer**를 선택합니다. 지원 프린터를 찾지 못하면 주소·모델을 수동으로 입력합니다.
 
-[공통 Bluetooth 설정·추천 기기](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md)에서 XIAO W5500 V1.2와 USB-A 동글 형태의 M5Stack AtomS3U 준비 방법을 확인하세요. 공통 추천은 모든 보드를 이 프린터와 실물 검증했다는 뜻은 아닙니다.
+[Bluetooth 프록시 설정](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md)에서 XIAO W5500 V1.2와 USB-A 동글 형태의 M5Stack AtomS3U 준비 방법을 확인하세요. 공통 추천은 모든 보드를 이 프린터와 실물 검증했다는 뜻은 아닙니다.
 
 ## 빠른 시작
 

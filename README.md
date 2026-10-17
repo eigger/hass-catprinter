@@ -26,7 +26,7 @@ A HACS custom integration that prints text, QR codes and images on inexpensive B
 2. Restart Home Assistant.
 3. Open **Settings → Devices & services** and confirm the discovered printer, or choose **Add integration → Cat Printer**. If no supported printer is discovered, enter its address and model manually.
 
-Prepare your proxy using [shared Bluetooth settings and recommended hardware (Korean)](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md), including XIAO W5500 V1.2 and the USB-A dongle-form M5Stack AtomS3U. This is general guidance, not a claim that each board was tested with this printer.
+Prepare your proxy using [Bluetooth proxy setup](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md), including XIAO W5500 V1.2 and the USB-A dongle-form M5Stack AtomS3U. This is general guidance, not a claim that each board was tested with this printer.
 
 ## Quick start
 
