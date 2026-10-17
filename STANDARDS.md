@@ -7,7 +7,7 @@
 - 적용 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
 - 중앙 현황: https://github.com/eigger/hass-repo-standards/blob/main/docs/adoption-status.md
 - 담당: 조율 `/root`, 구현 `/root/catprinter_implementation`(코드·테스트·CI)와 `/root/catprinter_docs`(문서), 독립 리뷰·검증 `/root/review_catprinter`
-- 중앙 시작 등록: 2026-10-17, `8be14269fa83fbcf5991634882a2de4a5ec52457`; 규칙 기준 SHA와 현황 등록 커밋은 별개
+- 중앙 시작 등록: 2026-10-17, `8be14269fa83fbcf5991634882a2de4a5ec52457`; 구현·검증 종료보고 `8d4348ea951736054d08f7cfe9b19f6d44b37a5e` main 등록. 규칙 기준 SHA와 현황 기록 커밋은 별개
 - 테스트 경로: `tests/components/catprinter/`
 - 변경 전 지원 최소: `hacs.json.homeassistant=2025.2.0`; 기존 README는 별도 HA 버전 선언 없음, manifest는 지원 HA 하한 필드 없음
 - 적용 후 지원 최소: **2025.2.0 유지**. 최신 테스트와 지원 하한을 분리하며 임의 상향하지 않음
@@ -29,12 +29,18 @@
 
 원격 Issues와 Discussions는 모두 활성, LICENSE는 MIT이며 정식 release 0.1.2가 존재함을 2026-10-17에 확인했습니다. Default HACS 등재를 확인하지 않았으므로 Custom 배지를 사용합니다. Usage는 원격 집계 사전 조회와 관계없이 추가합니다. main branch protection 조회는 404(Branch not protected), rulesets는 빈 배열이라 기존 required checks 이름을 영구 대기로 만드는 설정은 확인되지 않았습니다. 저장소 설정을 변경하지 않습니다.
 
-## 예외·남은 검증
+## 예외·검증 근거
 
-현재 기록된 로컬 적용 예외는 없습니다. GOV-03의 기존 채택 리포에 대한 규칙 갱신 PR 조건과 달리 이번은 첫 표준 채택이며 중앙 규칙 내용은 변경하지 않습니다. 사용자 직접 push 권한에 따라 main에 반영할 계획이며 실제 PR을 만들었다고 기록하지 않습니다. 지원 최소·계약 보존과 사용자 영향은 위와 개발 안내에 기록합니다.
+현재 기록된 로컬 적용 예외는 없습니다. GOV-03의 기존 채택 리포에 대한 규칙 갱신 PR 조건과 달리 이번은 첫 표준 채택이며 중앙 규칙 내용은 변경하지 않습니다. 사용자 직접 push 권한에 따라 main에 직접 반영했으며 실제 PR을 만들었다고 기록하지 않습니다. 지원 최소·계약 보존과 사용자 영향은 위와 개발 안내에 기록합니다.
 
 구현 및 추가 결함 수정 후 별도 review_catprinter의 실제 HA 독립 로컬 재검증을 완료했습니다. Current Python3.14.5/HA2026.10.2/플러그인0.13.373, 최소 Python3.13.14/HA2025.2.0/플러그인0.13.210에서 각각84passed6skipped·pipcheck PASS입니다. 구현 담당의 각 HA current/minimum 네 조합 설치·검증은 추가 cleanup 수정 전80개 이력입니다. 최종84개는 양 HA의 같은 실제 설치값 환경에서 실행했고 독립 담당은 currentHA/current모드·최소HA/minimum모드 두 환경을 직접 실행했으며 imagespec[datamatrix]1.1.0/blesession0.9.0 정확설치를 확인했습니다. 기존6파일58개 함수 소실0, Ruff/format48·actionlint·문서링크·배지·diffcheck PASS입니다. 6skip은 선택 dark PNG미제공4개·base이미지hDPI대응검사2개이며 실제 HA검사 skip은 없습니다.
 
 최소 HA 비호환 OptionsFlowWithReload는 공개 OptionsFlow+on_unload listener로 동일 reload를 유지하도록 수정했습니다. 실제 HA에서 반복 reload listener 하나·unload·복구·텍스트/DataMatrix 렌더, 로그/세션 주소 비식별을 검증했습니다. 기존 버전·프로토콜 하한·unique ID는 변경하지 않습니다.
 
-추가 독립 리뷰의 초기 poll 후 플랫폼 forward 실패/취소 keep 링크 누수는 refresh~forward 전체 cleanup guard 및 rollback finally close로 수정했습니다. GATT 서비스 변경·인쇄 취소에서 keep 링크를 폐기하고 fresh 연결로 복원하는 동작까지 실제 HA 회귀4개를 추가해 독립 재검증했습니다. 초기80passed에서 최종84passed로 갱신했으며 두 환경 경고(current BLEDevice19개/minimum macinotify1개)와 실물 미검증은 별도 한계입니다. 최종 대상 commit의 main 반영·원격 Tests4matrix/HACS/Hassfest와 중앙 종료 등록은 아직 대기입니다. 로컬 결과를 미래 원격 성공으로 소급하지 않습니다. 상세 판정·실제 명령·환경은 체크리스트에 기록합니다.
+추가 독립 리뷰의 초기 poll 후 플랫폼 forward 실패/취소 keep 링크 누수는 refresh~forward 전체 cleanup guard 및 rollback finally close로 수정했습니다. GATT 서비스 변경·인쇄 취소에서 keep 링크를 폐기하고 fresh 연결로 복원하는 동작까지 실제 HA 회귀4개를 추가해 독립 재검증했습니다. 초기80passed에서 최종84passed로 갱신했으며 두 환경 경고(current BLEDevice19개/minimum macinotify1개)와 실물 미검증은 별도 한계입니다. 검증 구현 `36419ac76e7e148a84efa7acdd6a1c964c85dfa5`의 main 반영과 [Tests](https://github.com/eigger/hass-catprinter/actions/runs/39036837387) 네 조합·[Validate](https://github.com/eigger/hass-catprinter/actions/runs/39036837361) HACS/Hassfest 원격 성공을 독립 확인했습니다. 중앙 구현·검증 종료보고 `8d4348ea951736054d08f7cfe9b19f6d44b37a5e`도 실제 main에 등록됐습니다. 상세 판정·실제 명령·환경은 체크리스트를 따릅니다.
+
+## 최종 채택 판정과 마감 문서 경계
+
+검증 대상 구현은 36419ac76e7e148a84efa7acdd6a1c964c85dfa5이며 기준 표준78d242092eac732a1af48770e77e3f51e566c6c2를 유지합니다. 원격 current Python3.14.8/HA2026.10.2/플러그인0.13.373과 최소 Python3.13.16/HA2025.2.0/플러그인0.13.210에서 각 current/minimum 라이브러리 네 조합 모두84passed6skipped·pipcheck 성공입니다. 네 조합의 실제 imagespec[datamatrix]1.1.0/blesession0.9.0 정확값·최소환경 보존을 확인했습니다. 6skip은 기존 선택 darkPNG4개 미제공과 base이미지hDPI검사2개이며 실제 HA검사 skip은 없습니다. 원격 HACS/Hassfest도 같은 구현 SHA로 성공했습니다.
+
+적용 필수 항목은 PASS 또는 근거 있는 N/A이고 현재 예외·필수 TODO는 없습니다. 이 판정은 검증 구현에 대한 것으로 본 마감 문서 자체의 미래 commit/CI를 미리 성공 처리하지 않습니다. 중앙 종료보고는 실제 등록됐고 표의 상태 완료 전환은 문서 게시 이후 수행합니다. 최초 채택은 사용자 직접 push 권한에 따라 main에 반영했으며 가짜 PR·tag·GitHub Release를 만들지 않습니다.
