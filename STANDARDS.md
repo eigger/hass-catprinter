@@ -44,3 +44,12 @@
 검증 대상 구현은 36419ac76e7e148a84efa7acdd6a1c964c85dfa5이며 기준 표준78d242092eac732a1af48770e77e3f51e566c6c2를 유지합니다. 원격 current Python3.14.8/HA2026.10.2/플러그인0.13.373과 최소 Python3.13.16/HA2025.2.0/플러그인0.13.210에서 각 current/minimum 라이브러리 네 조합 모두84passed6skipped·pipcheck 성공입니다. 네 조합의 실제 imagespec[datamatrix]1.1.0/blesession0.9.0 정확값·최소환경 보존을 확인했습니다. 6skip은 기존 선택 darkPNG4개 미제공과 base이미지hDPI검사2개이며 실제 HA검사 skip은 없습니다. 원격 HACS/Hassfest도 같은 구현 SHA로 성공했습니다.
 
 적용 필수 항목은 PASS 또는 근거 있는 N/A이고 현재 예외·필수 TODO는 없습니다. 이 판정은 검증 구현에 대한 것으로 본 마감 문서 자체의 미래 commit/CI를 미리 성공 처리하지 않습니다. 중앙 종료보고는 실제 등록됐고 표의 상태 완료 전환은 문서 게시 이후 수행합니다. 최초 채택은 사용자 직접 push 권한에 따라 main에 반영했으며 가짜 PR·tag·GitHub Release를 만들지 않습니다.
+
+- Reviewed release standards SHA: `fd4162c0b93fbe8e109f99c787773ae09ba157e1`
+
+
+## 2026-10-23 ZIP release and Downloads update
+
+Base commit: `7642bffba94f5230e5492e0dc2d1645dcf530da7`. HACS remains Custom. `hacs.json` now selects `catprinter.zip`; publishing the next release builds and attaches that integration ZIP through the pinned central action. Analytics Usage is replaced by Downloads. The archive contains tracked integration files at its root. No existing release/tag/assets are modified.
+
+Implementation and review: root; generated release caller reuses the independently reviewed central ZIP contract. Support minimum, manifest, code, dependencies, README body and prior adoption exceptions are preserved. Verification evidence is recorded in ADOPTION_CHECKLIST.md; this scoped update does not establish full standards compliance.
