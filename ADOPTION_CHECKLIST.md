@@ -246,3 +246,7 @@ python -m pip check
 ### 사용자 승인에 따른 게시·머지 진행
 
 2026-10-23 사용자의 “문제 없으면 스쿼시 머지” 지시에 따라 로컬 변경을 codex/adopt-shared-standards 브랜치의 명시적 채택 PR로 게시합니다. main 보호 설정은 Branch not protected(404)이며 원격 main과 시작 HEAD가 같음을 확인했습니다. 원격 CI·머지 결과는 생성 후 확인하고, 확인 전 성공으로 기록하지 않습니다. 위 “게시 미실행”은 로컬 검증 종료 시점의 이력입니다.
+
+### 원격 Hassfest 배포 이미지 호환성 수정
+
+첫 PR head 6568a210f858e5d49473ae8c884433025cf5f5b8의 [Hassfest](https://github.com/eigger/hass-catprinter/actions/runs/39914093604/job/120283565649)가 공식 stable 이미지의 categories 미지원으로 실패했습니다. 중앙 docs/ci.md의 검토 경로에 따라 validate caller에 hassfest-core-ref=ec18d8b25d1ee39aa8b85a72a170e42bee33228c를 고정했습니다. 해당 Core의 custom manifest schema와 공식 Dockerfile을 확인했고, upstream 원본 전체 validator를 수정 없이 빌드·실행합니다. categories 삭제·실패 무시·전처리나 지원 최소 상향을 하지 않습니다. 수정된 head의 원격 재검증이 필요하며 이전 성공과 혼동하지 않습니다.

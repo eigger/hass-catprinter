@@ -69,3 +69,5 @@ Implementation and review: root; generated release caller reuses the independent
 - 적용 예외 없음. 원격 게시·채택 PR·CI는 로컬 검증과 별도이며 이번 작업에서 아직 실행하지 않았습니다.
 
 2026-10-23 후속 사용자 지시 “문제 없으면 스쿼시 머지”에 따라 명시적 채택 PR 게시와 원격 CI 검증 후 스쿼시 머지를 진행합니다. 위 미게시 표기는 로컬 검증 종료 시점의 이력이며 최종 원격 상태는 실제 PR을 따릅니다.
+
+Hassfest 배포 이미지의 categories 스키마 지연은 중앙 CI-규약의 hassfest-core-ref=ec18d8b25d1ee39aa8b85a72a170e42bee33228c로 대응합니다. upstream 공식 전체 validator를 수정 없이 빌드하는 중앙 지원 입력이며 검사 예외나 지원 최소 변경이 아닙니다. 원격 실패·수정 근거는 ADOPTION_CHECKLIST.md를 따릅니다.
