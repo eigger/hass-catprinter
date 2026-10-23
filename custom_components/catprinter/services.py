@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import io
 
+import voluptuous as vol
 from homeassistant.components import bluetooth
 from homeassistant.components.image import Image
 from homeassistant.config_entries import ConfigEntryState
@@ -17,6 +18,7 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
@@ -27,6 +29,16 @@ from .render import render_image
 
 SERVICE_PRINT = "print"
 SERVICE_FEED = "feed"
+
+# Keep device-specific options and target fields unchanged. imagespec validates
+# the contents of the native element list used by the action editor.
+PRINT_SCHEMA = vol.Schema(
+    {
+        vol.Optional("payload"): list,
+        vol.Optional("preview"): cv.boolean,
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 @callback
@@ -48,6 +60,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN,
         SERVICE_PRINT,
         print_service,
+        schema=PRINT_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(DOMAIN, SERVICE_FEED, feed_service)

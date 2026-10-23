@@ -1,5 +1,14 @@
 """Real HA entries and deterministic external Bluetooth transport."""
 
+# <!-- hass-standards:domain-fixtures:start -->
+# Use pytest_homeassistant_custom_component.common.MockConfigEntry for
+# mock_config_entry when the integration uses config entries.
+# Define mock_client only when an external communication client is present.
+# Mock external communication boundaries, never Home Assistant core modules.
+# Keep integration-specific fixtures below this managed block.
+# <!-- hass-standards:domain-fixtures:end -->
+
+from functools import partial
 from time import monotonic
 
 import pytest
@@ -54,11 +63,17 @@ class PrinterTransport(FakeClient):
 
 
 @pytest.fixture
-def transport(monkeypatch):
+def mock_client(monkeypatch):
     device = PrinterTransport()
     monkeypatch.setattr("blesession.session.establish_connection", device.connect)
     monkeypatch.setattr(client_module, "QUERY_TIMEOUT", 0.01)
     return device
+
+
+@pytest.fixture
+def transport(mock_client):
+    """Keep the existing transport fixture interface for regression tests."""
+    return mock_client
 
 
 @pytest.fixture
@@ -85,7 +100,7 @@ async def advertisement(hass, enable_bluetooth):
 
 
 @pytest.fixture
-def entry(hass):
+def mock_config_entry(hass):
     config = MockConfigEntry(
         domain="catprinter",
         unique_id=ADDRESS,
@@ -94,6 +109,12 @@ def entry(hass):
     )
     config.add_to_hass(hass)
     return config
+
+
+@pytest.fixture
+def entry(mock_config_entry):
+    """Keep the existing entry fixture interface for regression tests."""
+    return mock_config_entry
 
 
 @pytest.fixture
@@ -119,3 +140,60 @@ def entity_id(hass):
         )
 
     return lookup
+
+
+@pytest.fixture
+async def payload_example_setup(hass, loaded_entry, entity_id):
+    """Load the real printer and give its registered image the documented ID."""
+    from homeassistant.helpers import entity_registry as er
+
+    registry = er.async_get(hass)
+    image_id = entity_id("last_print", "image")
+    if image_id != "image.cat_printer_last_print":
+        registry.async_update_entity(
+            image_id, new_entity_id="image.cat_printer_last_print"
+        )
+        await hass.async_block_till_done()
+    assert hass.services.has_service("catprinter", "print")
+    return loaded_entry
+
+
+@pytest.fixture
+def payload_example_adapter():
+    """Bind the production renderer after actual HA service preparation."""
+
+    def prepare(hass, example_metadata, normalized_action, schema_data):
+        from inspect import signature
+
+        from hass_standards_payload import PreparedPayload
+        from homeassistant.core import ServiceCall
+
+        from custom_components.catprinter.render import _make_context, render_image
+        from custom_components.catprinter.services import _resolve_target_entries
+
+        # HA added the owning hass argument after the supported minimum.
+        service = ServiceCall(
+            domain="catprinter",
+            service="print",
+            data=schema_data,
+            **({"hass": hass} if "hass" in signature(ServiceCall).parameters else {}),
+        )
+        entry = _resolve_target_entries(hass, service)[0]
+        width = entry.runtime_data.device.ble_data.printhead_px
+        return PreparedPayload(
+            payload=service.data.get("payload", ""),
+            context=_make_context(
+                hass, default_font="ppb.ttf", palette=["black", "white"]
+            ),
+            render_options={
+                "width": width,
+                "height": service.data.get("height", 240),
+                "rotate": service.data.get("rotate", 0),
+                "rotate_mode": "canvas",
+                "background": service.data.get("background", "white"),
+                "dither": False,
+            },
+            prepare=partial(render_image, entry.entry_id, service, hass, width),
+        )
+
+    return prepare

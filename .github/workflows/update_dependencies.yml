@@ -1,4 +1,3 @@
-# Shared standards; upstream action SHAs verified 2026-10-17.
 name: Update dependencies
 'on':
   schedule:
@@ -11,11 +10,14 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@78d242092eac732a1af48770e77e3f51e566c6c2 # reviewed standards commit
+    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@26946e9075503633c16fb1b0f7380d0101ed7b45
     with:
       domain: catprinter
       packages: '["imagespec", "blesession"]'
       python-version: '3.14'
       ha-components: bluetooth recorder image sensor binary_sensor
       test-profile: ha
-      validation-command: python -m ruff check . && python -m ruff format --check . && python -m pytest tests/components/catprinter/ -v
+      validation-command: python -m ruff check . && python -m ruff format --check
+        . && python -m pytest tests/components/catprinter/ --ignore=tests/components/catprinter/test_payload_examples.py
+        -v
+      standards-ref: 26946e9075503633c16fb1b0f7380d0101ed7b45

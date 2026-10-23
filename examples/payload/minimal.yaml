@@ -1,0 +1,14 @@
+action: catprinter.print
+target:
+  entity_id: image.cat_printer_last_print
+data:
+  payload:
+    - type: text
+      value: Hello Home Assistant!
+      x: 8
+      y: 8
+      size: 32
+  height: 80
+  rotate: 0
+  background: white
+  preview: true

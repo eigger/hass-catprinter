@@ -4,6 +4,7 @@ import base64
 import io
 
 import pytest
+import voluptuous as vol
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.setup import async_setup_component
 from PIL import Image
@@ -85,3 +86,39 @@ async def test_preview_renders_datamatrix_extra(hass, loaded_entry):
     image = Image.open(io.BytesIO(base64.b64decode(result["image"].split(",")[1])))
     assert image.size == (384, 96)
     assert image.convert("L").getextrema() == (0, 255)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [42, {"type": "text"}, None, "- type: text\n  value: Unsupported string\n"],
+)
+async def test_registered_print_schema_rejects_invalid_payload(
+    hass, loaded_entry, transport, payload
+):
+    before = len(transport.writes)
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            "catprinter", "print", {"payload": payload}, blocking=True
+        )
+    assert len(transport.writes) == before
+
+
+async def test_registered_print_schema_previews_native_list(
+    hass, loaded_entry, transport
+):
+    before = len(transport.writes)
+    result = await hass.services.async_call(
+        "catprinter",
+        "print",
+        {
+            "preview": "true",
+            "height": 32,
+            "payload": [{"type": "text", "value": "Schema preview", "x": 0, "y": 0}],
+        },
+        blocking=True,
+        return_response=True,
+    )
+    image = Image.open(io.BytesIO(base64.b64decode(result["image"].split(",")[1])))
+    assert image.size == (384, 32)
+    assert image.convert("L").getextrema() == (0, 255)
+    assert len(transport.writes) == before
