@@ -135,3 +135,46 @@ review_catprinter는 수정 diff와 두 독립 환경을 재실행해 current84p
 review_catprinter가 main 구현 36419ac76e7e148a84efa7acdd6a1c964c85dfa5와 Tests/Validate의 실제 head 일치를 독립 확인했습니다. [Tests](https://github.com/eigger/hass-catprinter/actions/runs/39036837387)는 네 HA/라이브러리 조합과 lint2개 job 전부 성공했고 [Validate](https://github.com/eigger/hass-catprinter/actions/runs/39036837361)는 HACS·Hassfest 성공입니다. 네 테스트 job 모두 blesession0.9.0/imagespec[datamatrix]1.1.0 실제 설치와 `pip check`의 No broken requirements를 확인했습니다. 위 환경표의 원격 Python 패치 버전은 로컬과 구분했습니다.
 
 중앙 구현·검증 종료보고는 [커밋 8d4348e](https://github.com/eigger/hass-repo-standards/commit/8d4348ea951736054d08f7cfe9b19f6d44b37a5e)로 실제 게시됐습니다. 검증 구현의 적용 필수 항목은 PASS 또는 사유 있는 N/A이고 예외는 없습니다. 본 마감 문서는 해당 구현 검증을 기록하는 별도 후속 변경이며 자기 자신이나 미래 commit의 CI 성공을 주장하지 않습니다. 중앙 표의 상태 완료 전환은 문서 게시 후 수행합니다. 실물 프린터·새 proxy 보드·무선 성능·HA UI 미검증 한계는 유지합니다.
+
+
+## 2026-10-23 HACS ZIP and Downloads (scoped)
+
+- Target base: `7642bffba94f5230e5492e0dc2d1645dcf530da7`; reviewed release central: `fd4162c0b93fbe8e109f99c787773ae09ba157e1`.
+- Scope: HACS-04/CI-11 release ZIP and DOC-03/05 Downloads replacing Analytics Usage. No release is created during this update.
+- Local scoped validation: PASS — canonical badge check, no Analytics Usage, release metadata/caller contract, actionlint 1.7.12, native git diff --check, unchanged tracked integration/manifest/dependencies/tests.
+- Actual archive build: PASS at `be6ff1202d417e7a71b20b1ba1b92dd784673724`; `catprinter.zip`, 32 files, SHA256 `3852b50466626a0ec1872ba8bf8040765cef3b915dfedcdf07853fef1de69049`. All archive members matched checkout bytes; manifest.json and __init__.py are at ZIP root. Final documentation-only follow-up preserves this integration tree. Windows Python 3.14.6; validation WSL Python 3.14.4/PyYAML 6.0.3/packaging 26.0.
+- Full central integration checker: FAIL (pre-existing or unadopted contracts outside this scoped update; not treated as PASS). Findings:
+
+```text
+DOC-01 README.md: Exactly one ordered header marker pair required
+DOC-01 README.ko.md: Exactly one ordered header marker pair required
+HA-02 custom_components/catprinter/manifest.json: categories requires 1–3 actual product categories (HA-02 project policy)
+TEST-08 tests/components/catprinter/test_binary_sensor.py: Required contract file is missing
+TEST-08 tests/components/catprinter/test_image.py: Required contract file is missing
+TEST-08 tests/components/catprinter/test_sensor.py: Required contract file is missing
+TEST-08 tests/components/catprinter/test_payload_examples.py: Required contract file is missing
+HA-13 custom_components/__init__.py: Required contract file is missing
+GOV-02 .github/workflows/tests.yml: standards-ref must equal the reviewed reusable workflow SHA
+GOV-02 .github/workflows/tests.yml: standards-ref must equal the reviewed reusable workflow SHA
+GOV-02 .github/workflows/update_dependencies.yml: standards-ref must equal the reviewed reusable workflow SHA
+TEST-03 tests/conftest.py: must match the central template exactly
+TEST-08 tests/components/catprinter/conftest.py: Exactly one ordered domain-fixtures marker pair required
+CI-02 .github/workflows/tests.yml: name and events must match the central template (actual default branch)
+CI-01 .github/workflows/validate.yml: central standards composite action pinned to full SHA required
+DOC-07 docs/troubleshooting.md: Use the central troubleshooting H2 headings in their fixed order
+DOC-07 README.md: README must link to matching-language local troubleshooting and blesession proxy setup
+DOC-07 docs/troubleshooting.ko.md: [Errno 2] No such file or directory: '/mnt/d/Source/Github/.hacs-custom-zip/hass-catprinter/docs/troubleshooting.ko.md'
+DOC-07 README.ko.md: README must link to matching-language local troubleshooting and blesession proxy setup
+DOC-08 .hass-standards.json: 'payload'
+DOC-08 tests/components/catprinter/test_payload_examples.py: [Errno 2] No such file or directory: '/mnt/d/Source/Github/.hacs-custom-zip/hass-catprinter/tests/components/catprinter/test_payload_examples.py'
+DOC-08 docs/payload.md: [Errno 2] No such file or directory: '/mnt/d/Source/Github/.hacs-custom-zip/hass-catprinter/docs/payload.md'
+DOC-08 README.md: README must link its matching-language local payload guide
+DOC-08 docs/payload.ko.md: [Errno 2] No such file or directory: '/mnt/d/Source/Github/.hacs-custom-zip/hass-catprinter/docs/payload.ko.md'
+DOC-08 README.ko.md: README must link its matching-language local payload guide
+DOC-08 .github/workflows/tests.yml: standards-ref must equal the reviewed reusable workflow SHA
+DOC-08 .github/workflows/tests.yml: standards-ref must equal the reviewed reusable workflow SHA
+DOC-08 .github/workflows/update_dependencies.yml: Dependency update standards-ref must equal its reviewed reusable workflow SHA
+```
+
+- Existing CI workflows are preserved, except hass-kocom-smarthome where matching reviewed central references are synchronized. Existing support minimum and prior exceptions remain.
+- Independent review and remote CI: tracked in this branch's pull request; merge requires resolved actionable findings and successful applicable checks. No real release upload, device or new real HA runtime validation is claimed by these local packaging checks.
