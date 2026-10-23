@@ -1,4 +1,9 @@
+<!-- hass-standards:header:start -->
 # hass-catprinter
+
+Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Bluetooth 감열식 “고양이 프린터”에 글자·QR 코드·이미지를 인쇄하는 HACS 커스텀 통합입니다.
+
+[English](README.md) | **한국어**
 
 <!-- hass-standards:badges:start -->
 [![Release](https://img.shields.io/github/v/release/eigger/hass-catprinter?style=flat)](https://github.com/eigger/hass-catprinter/releases)
@@ -9,10 +14,7 @@
 [![License](https://img.shields.io/github/license/eigger/hass-catprinter?style=flat)](LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/eigger/hass-catprinter/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-catprinter/releases)
 <!-- hass-standards:badges:end -->
-
-[English](README.md) | **한국어**
-
-Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Bluetooth 감열식 “고양이 프린터”에 글자·QR 코드·이미지를 인쇄하는 HACS 커스텀 통합입니다.
+<!-- hass-standards:header:end -->
 
 ## 기능과 최소 요구사항
 
@@ -22,11 +24,15 @@ Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Blue
 
 ## 설치
 
+<!-- hass-standards:installation:start -->
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-catprinter&category=integration)
+<!-- hass-standards:installation:end -->
+
 1. **HACS → 사용자 지정 저장소 → 통합**에 `https://github.com/eigger/hass-catprinter`를 추가하거나 `custom_components/catprinter`를 HA 설정의 `custom_components/` 아래로 복사합니다.
 2. Home Assistant를 재시작합니다.
 3. **설정 → 기기 및 서비스**에서 발견한 프린터를 확인하거나 **통합 추가 → Cat Printer**를 선택합니다. 지원 프린터를 찾지 못하면 주소·모델을 수동으로 입력합니다.
 
-[Bluetooth 프록시 설정](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md)에서 XIAO W5500 V1.2와 USB-A 동글 형태의 M5Stack AtomS3U 준비 방법을 확인하세요. 공통 추천은 모든 보드를 이 프린터와 실물 검증했다는 뜻은 아닙니다.
+[Bluetooth 프록시 설정](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)에서 XIAO W5500 V1.2와 USB-A 동글 형태의 M5Stack AtomS3U 준비 방법을 확인하세요. 공통 추천은 모든 보드를 이 프린터와 실물 검증했다는 뜻은 아닙니다.
 
 ## 빠른 시작
 
@@ -55,15 +61,28 @@ data:
 | 주제 | 한국어 | English |
 |---|---|---|
 | 모델·엔티티·작업·예제·전송 조정 | [사용 안내](docs/ko/user-guide.md) | [User guide](docs/user-guide.md) |
-| 전원·연결·용지·세션 오류 | [문제 해결](docs/ko/troubleshooting.md) | [Troubleshooting](docs/troubleshooting.md) |
+| 전원·연결·용지·세션 오류 | [문제 해결](docs/troubleshooting.ko.md) | [Troubleshooting](docs/troubleshooting.md) |
+| payload 액션 예제·렌더링·출력 설정 | [payload 안내](docs/payload.ko.md) | [Payload guide](docs/payload.md) |
 | 실제 HA 테스트·의존성·참여 | [개발 안내](docs/development.md) | [Development (Korean)](docs/development.md) |
 | 프레임·CRC·모델 프로파일 | [프로토콜 원문 (영어)](docs/protocol.md) | [Protocol](docs/protocol.md) |
 | 기준·검증 증거 | [적용 규칙](STANDARDS.md) | [Adoption checklist (Korean)](ADOPTION_CHECKLIST.md) |
 
-Usage 배지는 HA Analytics에 참여한 설치 집계이며 전체 설치 수나 사람 수가 아닙니다. 미집계·조회 실패를 설치 수 0으로 해석하지 않습니다.
-
-## 지원·라이선스
+Downloads 배지는 HACS가 사용하는 통합 ZIP을 포함한 모든 GitHub Release 첨부 파일의 다운로드 합계이며 활성 설치 수나 고유 사용자 수가 아닙니다. 이전 Usage 배지는 HA Analytics 참여 설치만 집계했으며 미집계나 조회 실패는 0 설치를 뜻하지 않았습니다.
 
 버그는 [Issues](https://github.com/eigger/hass-catprinter/issues)에 문제 해결 문서의 비식별 증거와 함께 제보하고, 질문·제안은 [Discussions](https://github.com/eigger/hass-catprinter/discussions)를 이용하세요.
 
-[MIT License](LICENSE)로 배포합니다.
+<!-- hass-standards:support:start -->
+## 지원
+
+- [Issues](https://github.com/eigger/hass-catprinter/issues): 버그를 신고하거나 기능을 요청하세요.
+- [Discussions](https://github.com/eigger/hass-catprinter/discussions): 질문하고 사용 경험을 공유하세요.
+<!-- hass-standards:support:end -->
+
+<!-- hass-standards:related-projects:start -->
+<!-- hass-standards:related-projects:end -->
+
+<!-- hass-standards:license:start -->
+## 라이선스
+
+[MIT License](LICENSE) 라이선스로 배포됩니다.
+<!-- hass-standards:license:end -->

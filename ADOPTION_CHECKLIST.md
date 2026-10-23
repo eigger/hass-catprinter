@@ -1,5 +1,7 @@
 # 공통 규칙 적용 체크리스트
 
+최신 검토는 아래 **2026-10-23 최신 공용화 재검토** 절입니다. 기존 2026-10-17 채택과 ZIP 부분 적용은 과거 근거로 보존하며 이번 작업의 PASS로 재사용하지 않습니다.
+
 hass-catprinter 두 번째 파일럿의 실제 채택 점검 기록입니다. 구현과 추가 리뷰 결함 수정·독립 로컬 재검증을 완료했습니다. 검증 대상 구현 `36419ac76e7e148a84efa7acdd6a1c964c85dfa5`의 main 반영·원격 CI 성공·중앙 구현/검증 종료보고 등록을 확인했습니다. 본 문서 마감은 별도 후속 변경이며 아직 게시되지 않은 문서 commit의 CI 성공을 주장하지 않습니다. [사용법과 판정 기준](https://github.com/eigger/hass-repo-standards/blob/78d242092eac732a1af48770e77e3f51e566c6c2/docs/checklist.md)을 읽고, 아래 규칙은 `STANDARDS.md`에 기록한 표준 커밋에서 확인합니다. 태그·릴리스 대신 검토한 전체 커밋 SHA를 기준으로 합니다.
 
 ## 검토 대상
@@ -178,3 +180,73 @@ DOC-08 .github/workflows/update_dependencies.yml: Dependency update standards-re
 
 - Existing CI workflows are preserved, except hass-kocom-smarthome where matching reviewed central references are synchronized. Existing support minimum and prior exceptions remain.
 - Independent review and remote CI: tracked in this branch's pull request; merge requires resolved actionable findings and successful applicable checks. No real release upload, device or new real HA runtime validation is claimed by these local packaging checks.
+
+## 2026-10-23 최신 공용화 재검토
+
+| 항목 | 이번 작업의 근거 |
+|---|---|
+| 기준 통합 | `9aee8a47c9d6ab2a48c2cd1d5f8de62282e640dd` + 이번 로컬 작업 트리 |
+| 검토 중앙 SHA | `26946e9075503633c16fb1b0f7380d0101ed7b45`; 원격 main 일치 확인 |
+| 구현 / 독립 리뷰 | root, docs, test_contract / independent_review |
+| 검증 범위 fingerprint | `3bae8a779333114bc26b8ecca43340a71a04ec88ebcf27f0dab8b615e1de4e51`; 코드·테스트·workflow·예제·환경/메타데이터의 LF 정규화 파일명/파일 SHA256 목록을 정렬한 JSON의 SHA256 |
+| 지원 계약 | HA 2025.2.0, 통합 0.2.0, blesession>=0.9.0, imagespec[datamatrix]>=1.1.0 유지 |
+| 원격 확인 | main, Issues/Discussions 활성 확인. 저장소 설정·릴리스·태그 변경 없음 |
+| 현재 판정 | 로컬 적용·필수 검사·독립 리뷰 완료. 원격 게시/채택 PR/CI 미실행 |
+
+### 적용 및 검토 결과
+
+- GOV-01/02, CI-01/02: 관리 README 영역·HACS 설치 배지·중앙 Validate 검사를 중앙 렌더러/템플릿으로 적용. 공용 workflow/action과 standards-ref를 동일 전체 SHA로 고정했습니다. 기존 최소/current job명·지원 조합·봇 일정과 의존성 하한을 보존합니다. 중앙 tests.yml의 고정 이벤트 계약을 따르면서 기존 주간 실행은 tests_scheduled.yml로 유지했습니다.
+- HA-02: 실제 Bluetooth 감열 프린터의 인쇄 용도에 따라 computers_network.printers를 선택하고 categories_review에 근거를 기록했습니다. 센서 플랫폼을 제품 분류로 취급하지 않습니다.
+- HA-13/TEST-03/08: package marker·정확한 중앙 root fixture·domain managed fixture·실제 sensor/binary_sensor/image 회귀와 payload scaffold를 추가했습니다. 기존 회귀를 삭제하거나 skip하지 않았습니다.
+- DOC-01/02/06/07/08: 양언어 README 본문과 기존 한국어 문제 해결 경로를 보존했습니다. 양언어 고정 구조의 기기 문제 해결/payload 문서, 실제 전체 preview 액션 YAML과 메타데이터를 추가하고 blesession/imagespec의 같은 언어 공통 원본으로 연결했습니다. Downloads 집계와 이전 Usage 집계의 차이를 안내합니다.
+- print 액션에는 실제 payload list와 preview boolean 입력 스키마를 등록했습니다. 기존 출력 옵션·target 필드는 extra=ALLOW_EXTRA로 유지하며 element 내용은 imagespec이 검증합니다. 등록 스키마에서 지원하지 않는 payload 타입은 전송 전에 거부합니다. 새 YAML 문자열 parser나 새 기기 기능을 만들지 않았습니다.
+- payload adapter는 실제 HA SCRIPT_SCHEMA/서비스 준비·등록 스키마·로딩된 entry/registry를 사용하고 production render_image 및 _make_context를 호출합니다. Bluetooth 외부 전송 경계만 대체합니다. 별도 서비스·가짜 renderer를 등록하지 않습니다. 실제 HA 템플릿 준비, 번들 폰트, 실제 in-memory recorder의 get_significant_states 경로도 회귀로 검증했습니다.
+
+### 실제 설치 및 실행
+
+| HA 축 | 라이브러리 모드 | 실제 Python / HA / pytest HA plugin | 실제 imagespec / blesession | payload / 회귀 / pip check |
+|---|---|---|---|---|
+| current | current resolver | 3.14.7 / 2026.10.2 / 0.13.373 | 1.1.0 / 0.9.0 | 1 passed / 95 passed, 6 skipped / PASS |
+| current | minimum exact | 3.14.7 / 2026.10.2 / 0.13.373 | 1.1.0 / 0.9.0 | 1 passed / 95 passed, 6 skipped / PASS |
+| minimum | current resolver | 3.13.15 / 2025.2.0 / 0.13.210 | 1.1.0 / 0.9.0 | 1 passed / 95 passed, 6 skipped / PASS |
+| minimum | minimum exact | 3.13.15 / 2025.2.0 / 0.13.210 | 1.1.0 / 0.9.0 | 1 passed / 95 passed, 6 skipped / PASS |
+
+WSL Ubuntu의 별도 네 가상환경에서 중앙 actions/python-environment/install.py로 의존성을 함께 해결했습니다. current는 manifest 범위의 resolver 모드이며 이번 실제 해결값은 하한과 같았습니다. 더 높은 라이브러리 버전의 검증으로 표현하지 않습니다. minimum은 INPUT_MINIMUM_PACKAGES='["imagespec","blesession"]'로 정확한 하한 설치를 확인했습니다. 설치 뒤 임의 패키지 교체·--no-deps·HA stub은 사용하지 않았습니다.
+
+공통 설치 입력: INPUT_DOMAIN=catprinter, INPUT_HA_COMPONENTS='bluetooth recorder image sensor binary_sensor', INPUT_TEST_PROFILE=ha. HA 축에 따라 requirements_test.txt/requirements_test_min.txt 및 정확한 INPUT_EXPECTED_HA_VERSION을 선택하고 INPUT_DEPENDENCY_MODE=current/minimum, 환경별 RUNNER_TEMP를 사용했습니다. 설치 전 packaging==26.3을 설치했으며 installer의 pip check가 성공했습니다. 재현 절차는 [개발 안내](docs/development.md)를 따릅니다.
+
+각 환경에서 중앙 SHA의 scripts를 PYTHONPATH로 지정하고 다음을 순서대로 실행했습니다.
+
+```bash
+export PAYLOAD_REPOSITORY="$PWD"
+export PAYLOAD_DOMAIN=catprinter
+export PYTHONPATH="$STANDARDS_CHECKOUT/scripts${PYTHONPATH:+:$PYTHONPATH}"
+python -m pytest -p hass_standards_payload tests/components/catprinter/test_payload_examples.py -q
+python -m pytest tests/components/catprinter/ --ignore=tests/components/catprinter/test_payload_examples.py -q
+python -m pip check
+```
+
+예제 minimal.yaml은 실제 등록 print 액션의 native list payload와 X6h 모델 설정을 통해 384×80, black/white 출력으로 검증했습니다. payload 계약은 skip/xfail/deselect하지 않았습니다. 회귀의 6 skip은 기존 선택 dark 이미지 4개 미제공과 base 이미지의 hDPI 검사 2개이며 실제 HA 검사 skip은 없습니다. Current에는 기존 BLEDevice 인자 및 recorder 의존성 등의 경고 30개가 있고 실패로 숨기지 않았습니다.
+
+로컬 로그는 대상 밖 `D:/Source/Github/.catprinter-standards-20261023/`에 보존했습니다. 설치·모드별 실행과 현재/최소 기본 환경 로그를 구분합니다. 이는 원격 CI 링크가 아닙니다.
+
+### 정적 검사와 독립 리뷰
+
+- python scripts/check_integration.py <target> --check: PASS (native checkout 및 Git blob 기준 LF snapshot 모두).
+- python scripts/sync_badges.py <target> --check: PASS.
+- python -m ruff check . / python -m ruff format --check .: PASS, Ruff 0.16.4, 55 Python 파일.
+- actionlint 1.7.12: PASS; native git diff --check: PASS.
+- 중앙 python scripts/check_repository.py: 중앙 SHA의 LF Git archive에서 PASS (37 documents, 8 workflows, JSON/caller contracts). Windows core.autocrlf=true checkout/archive에서는 README raw-byte guard가 CRLF를 거부했으므로, core.autocrlf=false archive로 원본 Git blob을 내보내 재검증했습니다. 중앙 템플릿 자체를 수정하지 않았습니다.
+- independent_review는 최종 diff·번역/본문 보존·adapter production 경로·서비스 schema·CI와 recorder fixture의 mock 경계를 검토했습니다. YAML 문자열은 기존 renderer가 지원하지 않으므로 허용하지 말라는 지적을 반영해 schema와 회귀를 수정했습니다. 최종 current HA 독립 재실행은 payload 1 passed, 회귀 95 passed/6 skipped와 Ruff/format·actionlint·중앙 checker PASS이며 남은 수정 지적은 없습니다. 독립 담당이 최소 HA를 직접 실행했다는 주장은 하지 않습니다; 최소 HA는 test_contract 및 root의 별도 환경 결과입니다.
+
+### 남은 게시 단계와 검증 한계
+
+적용 예외·미해결 로컬 검사·리뷰 지적은 없습니다. GOV-03의 명시적 채택 PR, 원격 Tests/Validate와 브랜치 정책 확인은 아직 실행하지 않았으며 원격 완료로 처리하지 않습니다. 중앙 현황표에는 자기 리포 행만 로컬 갱신했고 중앙 원격에는 게시하지 않았습니다. 사용자의 별도 commit/push/PR 지시 없이 원격 게시·릴리스는 수행하지 않았습니다. 실물 프린터·새 proxy 보드·무선 성능·HA frontend는 이번 검증 대상이 아닙니다.
+
+### 사용자 승인에 따른 게시·머지 진행
+
+2026-10-23 사용자의 “문제 없으면 스쿼시 머지” 지시에 따라 로컬 변경을 codex/adopt-shared-standards 브랜치의 명시적 채택 PR로 게시합니다. main 보호 설정은 Branch not protected(404)이며 원격 main과 시작 HEAD가 같음을 확인했습니다. 원격 CI·머지 결과는 생성 후 확인하고, 확인 전 성공으로 기록하지 않습니다. 위 “게시 미실행”은 로컬 검증 종료 시점의 이력입니다.
+
+### 원격 Hassfest 배포 이미지 호환성 수정
+
+첫 PR head 6568a210f858e5d49473ae8c884433025cf5f5b8의 [Hassfest](https://github.com/eigger/hass-catprinter/actions/runs/39914093604/job/120283565649)가 공식 stable 이미지의 categories 미지원으로 실패했습니다. 중앙 docs/ci.md의 검토 경로에 따라 validate caller에 hassfest-core-ref=ec18d8b25d1ee39aa8b85a72a170e42bee33228c를 고정했습니다. 해당 Core의 custom manifest schema와 공식 Dockerfile을 확인했고, upstream 원본 전체 validator를 수정 없이 빌드·실행합니다. categories 삭제·실패 무시·전처리나 지원 최소 상향을 하지 않습니다. 수정된 head의 원격 재검증이 필요하며 이전 성공과 혼동하지 않습니다.

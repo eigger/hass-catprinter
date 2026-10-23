@@ -1,11 +1,10 @@
 name: Tests
-on:
+'on':
   push:
-    branches: [main]
-  pull_request:
-  workflow_dispatch:
-  schedule:
-    - cron: "23 4 * * 1"
+    branches:
+    - main
+  pull_request: null
+  workflow_dispatch: null
 permissions:
   contents: read
 concurrency:
@@ -13,26 +12,28 @@ concurrency:
   cancel-in-progress: true
 jobs:
   current:
-    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@78d242092eac732a1af48770e77e3f51e566c6c2 # reviewed standards commit
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@26946e9075503633c16fb1b0f7380d0101ed7b45
     with:
       domain: catprinter
       python-versions: '["3.14"]'
       lint-python-version: '3.14'
       requirements: requirements_test.txt
-      expected-ha-version: '2026.10.2'
+      expected-ha-version: 2026.10.2
       test-profile: ha
-      ha-components: 'bluetooth recorder image sensor binary_sensor'
+      ha-components: bluetooth recorder image sensor binary_sensor
       dependency-modes: '["current", "minimum"]'
       minimum-packages: '["imagespec", "blesession"]'
+      standards-ref: 26946e9075503633c16fb1b0f7380d0101ed7b45
   minimum-ha:
-    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@78d242092eac732a1af48770e77e3f51e566c6c2 # reviewed standards commit
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@26946e9075503633c16fb1b0f7380d0101ed7b45
     with:
       domain: catprinter
       python-versions: '["3.13"]'
       lint-python-version: '3.14'
       requirements: requirements_test_min.txt
-      expected-ha-version: '2025.2.0'
+      expected-ha-version: 2025.2.0
       test-profile: ha
-      ha-components: 'bluetooth recorder image sensor binary_sensor'
+      ha-components: bluetooth recorder image sensor binary_sensor
       dependency-modes: '["current", "minimum"]'
       minimum-packages: '["imagespec", "blesession"]'
+      standards-ref: 26946e9075503633c16fb1b0f7380d0101ed7b45

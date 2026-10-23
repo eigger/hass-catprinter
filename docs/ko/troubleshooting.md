@@ -1,8 +1,8 @@
 # Cat Printer 문제 해결
 
-[메인](../../README.ko.md) | [English](../troubleshooting.md)
+[메인](../../README.ko.md) | [최신 문제 해결 안내](../troubleshooting.ko.md) | [English](../troubleshooting.md)
 
-[Bluetooth 프록시 설정](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md#troubleshooting)부터 확인하세요. 프록시 펌웨어 설정과 Cat Printer 옵션은 별개입니다. 공통 문서의 기본 추천은 Ethernet·PoE·외장 안테나 구성의 XIAO W5500 Ethernet Adapter **V1.2**, USB-A 동글 형태는 **M5Stack AtomS3U**이며 구매 링크도 공통 문서에 있습니다. 모든 보드와 프린터 조합을 새로 실물 검증했다는 뜻은 아닙니다.
+[Bluetooth 프록시 설정](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)부터 확인하세요. 프록시 펌웨어 설정과 Cat Printer 옵션은 별개입니다. 공통 문서의 기본 추천은 Ethernet·PoE·외장 안테나 구성의 XIAO W5500 Ethernet Adapter **V1.2**, USB-A 동글 형태는 **M5Stack AtomS3U**이며 구매 링크도 공통 문서에 있습니다. 모든 보드와 프린터 조합을 새로 실물 검증했다는 뜻은 아닙니다.
 
 ## 1. 프린터 준비
 

@@ -12,6 +12,48 @@
   "validate_workflow": "validate.yml",
   "installation_links": {
     "README.md": "#installation",
-    "README.ko.md": "#\uc124\uce58"
+    "README.ko.md": "#설치"
+  },
+  "readme": {
+    "title": "hass-catprinter",
+    "descriptions": {
+      "en": "A HACS custom integration that prints text, QR codes and images on inexpensive Bluetooth thermal “cat” printers using Home Assistant's Bluetooth stack and ESPHome proxies.",
+      "ko": "Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Bluetooth 감열식 “고양이 프린터”에 글자·QR 코드·이미지를 인쇄하는 HACS 커스텀 통합입니다."
+    },
+    "issues": true,
+    "discussions": true,
+    "related_projects": [],
+    "license_name": "MIT License",
+    "license_notices": {
+      "en": [],
+      "ko": []
+    }
+  },
+  "categories_review": {
+    "value": [
+      "computers_network.printers"
+    ],
+    "source": "README Features and requirements and docs/user-guide.md: Bluetooth thermal printers produce physical text, QR codes and images; printers is the primary actual product category. Entity platforms do not determine this selection.",
+    "integration_type": "device"
+  },
+  "payload": {
+    "examples": [
+      {
+        "path": "examples/payload/minimal.yaml",
+        "payload_path": [
+          "data",
+          "payload"
+        ],
+        "payload_format": "list",
+        "expected_size": [
+          384,
+          80
+        ],
+        "expected_palette": [
+          "#000000",
+          "#ffffff"
+        ]
+      }
+    ]
   }
 }

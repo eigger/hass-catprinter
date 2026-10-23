@@ -1,8 +1,10 @@
 # 적용한 공통 규칙
 
-- 표준: https://github.com/eigger/hass-repo-standards/tree/78d242092eac732a1af48770e77e3f51e566c6c2
-- 참조 커밋 SHA: `78d242092eac732a1af48770e77e3f51e566c6c2`
-- 채택 검토일: 2026-10-17
+현재 적용 기준은 2026-10-23 후속 공용화 기록입니다. 아래 2026-10-17 채택과 ZIP 부분 적용의 PASS·제약은 당시 검증 이력이며 이번 변경의 검증 결과로 재사용하지 않습니다.
+
+- 표준: https://github.com/eigger/hass-repo-standards/tree/26946e9075503633c16fb1b0f7380d0101ed7b45
+- 참조 커밋 SHA: `26946e9075503633c16fb1b0f7380d0101ed7b45`
+- 채택 검토일: 2026-10-23 (이전 기록은 아래 보존)
 - profile: integration / ha; domain `catprinter`, 실제 기본 브랜치 `main`
 - 적용 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
 - 중앙 현황: https://github.com/eigger/hass-repo-standards/blob/main/docs/adoption-status.md
@@ -45,7 +47,7 @@
 
 적용 필수 항목은 PASS 또는 근거 있는 N/A이고 현재 예외·필수 TODO는 없습니다. 이 판정은 검증 구현에 대한 것으로 본 마감 문서 자체의 미래 commit/CI를 미리 성공 처리하지 않습니다. 중앙 종료보고는 실제 등록됐고 표의 상태 완료 전환은 문서 게시 이후 수행합니다. 최초 채택은 사용자 직접 push 권한에 따라 main에 반영했으며 가짜 PR·tag·GitHub Release를 만들지 않습니다.
 
-- Reviewed release standards SHA: `fd4162c0b93fbe8e109f99c787773ae09ba157e1`
+- Reviewed release standards SHA: `26946e9075503633c16fb1b0f7380d0101ed7b45`
 
 
 ## 2026-10-23 ZIP release and Downloads update
@@ -53,3 +55,19 @@
 Base commit: `7642bffba94f5230e5492e0dc2d1645dcf530da7`. HACS remains Custom. `hacs.json` now selects `catprinter.zip`; publishing the next release builds and attaches that integration ZIP through the pinned central action. Analytics Usage is replaced by Downloads. The archive contains tracked integration files at its root. No existing release/tag/assets are modified.
 
 Implementation and review: root; generated release caller reuses the independently reviewed central ZIP contract. Support minimum, manifest, code, dependencies, README body and prior adoption exceptions are preserved. Verification evidence is recorded in ADOPTION_CHECKLIST.md; this scoped update does not establish full standards compliance.
+
+## 2026-10-23 최신 공용화 적용
+
+- 대상 기준: `9aee8a47c9d6ab2a48c2cd1d5f8de62282e640dd`의 로컬 작업 트리.
+- 검토 표준: `26946e9075503633c16fb1b0f7380d0101ed7b45` (원격 main과 일치 확인).
+- 공통 README 관리 영역·HACS 설치 링크·중앙 Validate 검사·payload 계약과 실제 HA 플랫폼 테스트를 적용합니다. 공용 workflow/action과 standards-ref는 같은 전체 SHA로 고정합니다.
+- 실제 제품은 Bluetooth 감열 프린터이므로 주 분류는 `computers_network.printers`입니다. 엔티티 플랫폼에서 추정하지 않으며 근거는 `.hass-standards.json.categories_review`에 기록합니다.
+- 기존 HA 최소 2025.2.0, manifest 버전 0.2.0, 라이브러리 하한, domain·unique ID·설정 스키마를 보존합니다. `print` 등록 스키마는 기존 native list payload와 출력·target 확장 필드를 유지하며 preview boolean을 정규화합니다.
+- 기존 Tests의 주간 실행은 중앙 tests.yml 이벤트 계약에 맞춰 `tests_scheduled.yml`로 옮겨 유지합니다. 최소/current HA × current/minimum 라이브러리 네 조합과 기존 의존성 봇 일정을 보존합니다.
+- 기존 README 본문·한국어 문제 해결 경로를 보존하고 양언어 payload/기기 문제 해결 문서를 연결합니다. 새 기기 기능·실물 검증·릴리스를 주장하지 않습니다.
+- 담당: root 구현/통합, docs 문서, test_contract 테스트; 별도 independent_review가 독립 검토합니다. 검증 결과·미실행 범위는 ADOPTION_CHECKLIST.md의 같은 날짜 후속 기록을 따릅니다.
+- 적용 예외 없음. 원격 게시·채택 PR·CI는 로컬 검증과 별도이며 이번 작업에서 아직 실행하지 않았습니다.
+
+2026-10-23 후속 사용자 지시 “문제 없으면 스쿼시 머지”에 따라 명시적 채택 PR 게시와 원격 CI 검증 후 스쿼시 머지를 진행합니다. 위 미게시 표기는 로컬 검증 종료 시점의 이력이며 최종 원격 상태는 실제 PR을 따릅니다.
+
+Hassfest 배포 이미지의 categories 스키마 지연은 중앙 CI-규약의 hassfest-core-ref=ec18d8b25d1ee39aa8b85a72a170e42bee33228c로 대응합니다. upstream 공식 전체 validator를 수정 없이 빌드하는 중앙 지원 입력이며 검사 예외나 지원 최소 변경이 아닙니다. 원격 실패·수정 근거는 ADOPTION_CHECKLIST.md를 따릅니다.
