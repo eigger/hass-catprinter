@@ -15,10 +15,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   validate:
-    uses: eigger/hass-repo-standards/.github/workflows/validate-integration.yml@26946e9075503633c16fb1b0f7380d0101ed7b45
-    with:
-      # The published stable image rejects the upstream categories field.
-      hassfest-core-ref: ec18d8b25d1ee39aa8b85a72a170e42bee33228c
+    uses: eigger/hass-repo-standards/.github/workflows/validate-integration.yml@4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0
   standards:
     name: Central template compliance
     runs-on: ubuntu-latest
@@ -27,8 +24,8 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
       with:
         python-version: '3.14'
     # Replace main with the reviewed full standards SHA during adoption.
-    - uses: eigger/hass-repo-standards/actions/check-standards@26946e9075503633c16fb1b0f7380d0101ed7b45
+    - uses: eigger/hass-repo-standards/actions/check-standards@4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0

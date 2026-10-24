@@ -384,9 +384,6 @@
       "local_name": "ZHHC-*"
     }
   ],
-  "categories": [
-    "computers_network.printers"
-  ],
   "codeowners": [
     "@eigger"
   ],
@@ -402,5 +399,5 @@
     "blesession>=0.9.0",
     "imagespec[datamatrix]>=1.1.0"
   ],
-  "version": "0.2.0"
+  "version": "0.2.1"
 }

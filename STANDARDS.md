@@ -1,10 +1,10 @@
 # 적용한 공통 규칙
 
-현재 적용 기준은 2026-10-23 후속 공용화 기록입니다. 아래 2026-10-17 채택과 ZIP 부분 적용의 PASS·제약은 당시 검증 이력이며 이번 변경의 검증 결과로 재사용하지 않습니다.
+현재 적용 기준은 2026-10-25 CI 및 카테고리 호환성 후속 기록입니다. 아래 2026-10-17 채택과 ZIP 부분 적용의 PASS·제약은 당시 검증 이력이며 이번 변경의 검증 결과로 재사용하지 않습니다.
 
-- 표준: https://github.com/eigger/hass-repo-standards/tree/26946e9075503633c16fb1b0f7380d0101ed7b45
-- 참조 커밋 SHA: `26946e9075503633c16fb1b0f7380d0101ed7b45`
-- 채택 검토일: 2026-10-23 (이전 기록은 아래 보존)
+- 표준: https://github.com/eigger/hass-repo-standards/tree/4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0
+- 참조 커밋 SHA: `4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0`
+- 채택 검토일: 2026-10-25 (이전 기록은 아래 보존)
 - profile: integration / ha; domain `catprinter`, 실제 기본 브랜치 `main`
 - 적용 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
 - 중앙 현황: https://github.com/eigger/hass-repo-standards/blob/main/docs/adoption-status.md
@@ -47,7 +47,7 @@
 
 적용 필수 항목은 PASS 또는 근거 있는 N/A이고 현재 예외·필수 TODO는 없습니다. 이 판정은 검증 구현에 대한 것으로 본 마감 문서 자체의 미래 commit/CI를 미리 성공 처리하지 않습니다. 중앙 종료보고는 실제 등록됐고 표의 상태 완료 전환은 문서 게시 이후 수행합니다. 최초 채택은 사용자 직접 push 권한에 따라 main에 반영했으며 가짜 PR·tag·GitHub Release를 만들지 않습니다.
 
-- Reviewed release standards SHA: `26946e9075503633c16fb1b0f7380d0101ed7b45`
+- Reviewed release standards SHA: `4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0`
 
 
 ## 2026-10-23 ZIP release and Downloads update
@@ -71,3 +71,20 @@ Implementation and review: root; generated release caller reuses the independent
 2026-10-23 후속 사용자 지시 “문제 없으면 스쿼시 머지”에 따라 명시적 채택 PR 게시와 원격 CI 검증 후 스쿼시 머지를 진행합니다. 위 미게시 표기는 로컬 검증 종료 시점의 이력이며 최종 원격 상태는 실제 PR을 따릅니다.
 
 Hassfest 배포 이미지의 categories 스키마 지연은 중앙 CI-규약의 hassfest-core-ref=ec18d8b25d1ee39aa8b85a72a170e42bee33228c로 대응합니다. upstream 공식 전체 validator를 수정 없이 빌드하는 중앙 지원 입력이며 검사 예외나 지원 최소 변경이 아닙니다. 원격 실패·수정 근거는 ADOPTION_CHECKLIST.md를 따릅니다.
+
+
+## 2026-10-25 CI 및 카테고리 호환성
+
+중앙 PR #19의 `4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0`을 적용합니다. Release 검사에서 `actions/*`의 40자리 SHA 고정은 유지하되 실제 SHA 값 차이는 허용합니다. 모든 중앙 workflow/action과 standards-ref를 같은 검토 SHA로 갱신합니다.
+
+<a id="temporary-categories-compatibility"></a>
+
+### Temporary categories compatibility
+
+예외 ID: `catprinter-categories-pending-hacs`. 사용자가 2026-10-25 이 대화에서 HACS default PR 검증의 categories 미지원을 이유로 카테고리 임시 비활성화를 명시적으로 요청했습니다. JSON은 주석을 지원하지 않으므로 `custom_components/catprinter/manifest.json`에서 다음 필드만 임시 제거합니다.
+
+```json
+"categories": ["computers_network.printers"]
+```
+
+실제 제품 분류와 근거는 `.hass-standards.json.categories_review`에 보존합니다. 중앙 HA-02 규칙의 임시 예외는 이 manifest 경로에만 적용하며 HACS default PR 검증이 해당 필드를 지원하면 위 값을 복원하고 예외를 제거합니다. 이전 upstream Hassfest Core 고정 우회는 제거하고 중앙 기본 Hassfest 검증을 사용합니다. 이 기록이 앞선 categories 유지 및 예외 없음 기록을 대체합니다.
