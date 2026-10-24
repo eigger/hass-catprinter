@@ -384,9 +384,6 @@
       "local_name": "ZHHC-*"
     }
   ],
-  "categories": [
-    "computers_network.printers"
-  ],
   "codeowners": [
     "@eigger"
   ],

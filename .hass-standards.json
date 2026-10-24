@@ -55,5 +55,18 @@
         ]
       }
     ]
-  }
+  },
+  "exceptions": [
+    {
+      "id": "catprinter-categories-pending-hacs",
+      "rule": "HA-02",
+      "paths": [
+        "custom_components/catprinter/manifest.json"
+      ],
+      "reason": "Temporarily omit categories until the HACS default repository PR validation supports this manifest field. Restore computers_network.printers when supported.",
+      "approved_by": "eigger (repository owner, explicit instruction in this chat)",
+      "approved_at": "2026-10-25",
+      "evidence": "STANDARDS.md#temporary-categories-compatibility"
+    }
+  ]
 }

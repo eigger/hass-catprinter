@@ -250,3 +250,11 @@ python -m pip check
 ### 원격 Hassfest 배포 이미지 호환성 수정
 
 첫 PR head 6568a210f858e5d49473ae8c884433025cf5f5b8의 [Hassfest](https://github.com/eigger/hass-catprinter/actions/runs/39914093604/job/120283565649)가 공식 stable 이미지의 categories 미지원으로 실패했습니다. 중앙 docs/ci.md의 검토 경로에 따라 validate caller에 hassfest-core-ref=ec18d8b25d1ee39aa8b85a72a170e42bee33228c를 고정했습니다. 해당 Core의 custom manifest schema와 공식 Dockerfile을 확인했고, upstream 원본 전체 validator를 수정 없이 빌드·실행합니다. categories 삭제·실패 무시·전처리나 지원 최소 상향을 하지 않습니다. 수정된 head의 원격 재검증이 필요하며 이전 성공과 혼동하지 않습니다.
+
+## 2026-10-25 PR #22 CI 및 카테고리 호환성
+
+- 중앙 `26946e9075503633c16fb1b0f7380d0101ed7b45` → `4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0` 차이를 검토했습니다. 변경은 Release의 actions SHA 값 비교 정규화, 템플릿 setup-python 갱신 및 중앙 채택 현황 문서입니다.
+- 모든 중앙 workflow/action 및 standards-ref와 STANDARDS 참조를 새 검토 SHA로 일치시켰습니다.
+- 사용자 요청에 따라 manifest categories를 임시 제거했습니다. JSON 주석 대신 복원 값과 명시적 사용자 지시 근거를 STANDARDS.md의 Temporary categories compatibility에 보존했습니다. HA-02 예외는 해당 manifest 경로에만 적용합니다.
+- categories 대응을 위한 hassfest-core-ref를 제거하여 기본 공식 Hassfest를 사용합니다. 이전 categories 유지 기록은 당시 판단이며 이번 사용자 지시가 이를 대체합니다.
+- 로컬 검증: 새 중앙 커밋의 scripts/check_integration.py 전체 PASS (예정된 HA-02 예외 1건), 변경 JSON 3개 파싱 PASS, git diff --check PASS. 런타임 코드는 변경하지 않았으며 이번 로컬 확인에서 HA 테스트 전체를 재실행하지 않았습니다. 원격 CI 결과는 별도 확인합니다.
