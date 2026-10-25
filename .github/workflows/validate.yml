@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   validate:
-    uses: eigger/hass-repo-standards/.github/workflows/validate-integration.yml@4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0
+    uses: eigger/hass-repo-standards/.github/workflows/validate-integration.yml@v1.0.0
   standards:
     name: Central template compliance
     runs-on: ubuntu-latest
@@ -28,4 +28,4 @@ jobs:
       with:
         python-version: '3.14'
     # Replace main with the reviewed full standards SHA during adoption.
-    - uses: eigger/hass-repo-standards/actions/check-standards@4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0
+    - uses: eigger/hass-repo-standards/actions/check-standards@v1.0.0
