@@ -265,3 +265,10 @@ python -m pip check
 - Scope: central `uses`, reusable-workflow `standards-ref`, `.hass-standards.json`, and the current STANDARDS header only. Historical refs (4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0, 4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0) remain as evidence; runtime code, dependencies, support minimum, manifest, integration version and tests are unchanged.
 - Verification: Python 3.14 central checker before/after, published immutable release attestation, focused reference/ZIP checks, actionlint and diff check. PR CI and merge remain pending.
 - Review: generated reference change self-review under GOV-05; no device or HA runtime test is claimed for this refs-only PR.
+
+## 2026-10-25 Standards workflow 분리
+
+- 대상: 기본 브랜치 `66363fc372eda04dcc9a926ce5c8fcc890e846ec` 이후 로컬 diff. 기존 검사 job을 중앙 `templates/integration/.github/workflows/standards.yml`에 맞춰 분리하며 표시 이름만 `Standards`로 변경했습니다. 중앙 참조·Hassfest 입력·지원 최소·의존성·README·런타임·테스트는 보존했습니다.
+- 독립 리뷰 `ci_unify_review`: 수정하지 않은 별도 복사본에서 이전 job/YAML 동등성·중앙 템플릿 일치·보존 범위를 확인했습니다. `check_integration.py` (Python 3.14.5 / PyYAML 6.0.3 / packaging 26.3), actionlint 1.7.12 전체 workflow, `git diff --check` 통과. 기존 HA-02 예외는 별개로 유지됩니다.
+- 초기 Python 3.9 검사/도구 부재를 완료 근거로 사용하지 않았고 위 독립 환경에서 재검증했습니다. branch protection 조회는 HTTP 401로 required checks 확인 불가입니다.
+- 사용자 요청으로 이 변경을 별도 PR로 게시합니다. PR의 원격 CI는 로컬 검사와 별도로 확인하며 수동 dispatch·HA/기기 재검증은 수행하지 않았습니다. 이번 검사 결과를 전체 재채택 완료로 사용하지 않습니다.

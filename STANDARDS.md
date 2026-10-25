@@ -91,3 +91,7 @@ Hassfest 배포 이미지의 categories 스키마 지연은 중앙 CI-규약의 
 ### 2026-10-25 immutable central release reference migration
 
 - User-requested partial migration: current central caller references use immutable `v1.0.0` resolved to `44349ee5621eea5d80e5c427f7a2435d2c2491bb`. Prior scoped ZIP SHA evidence is retained here: `4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0`. Runtime code, dependencies, support minimum, manifest and integration version are unchanged.
+
+## 2026-10-25 Standards workflow 분리
+
+기준 `v1.0.0` / `44349ee5621eea5d80e5c427f7a2435d2c2491bb`를 유지하고 기존 Validate의 중앙 검사 job만 `standards.yml`로 이동해 workflow/job을 `Standards`로 표시합니다. 단계·SHA·이벤트·예약·권한·timeout과 기존 Validate caller 입력은 유지합니다. 실제 검증과 미게시 범위는 [체크리스트](ADOPTION_CHECKLIST.md#2026-10-25-standards-workflow-분리)를 따릅니다.
