@@ -62,7 +62,7 @@ python -m ruff format --check .
 
 ## 의존성·문서 변경
 
-Python 런타임은 manifest requirements, HA 구성요소는 dependencies/after_dependencies, 테스트·린트 도구는 별도 requirements에 둡니다. 새 의존성 추가는 [공통 의존성 규칙](https://github.com/eigger/hass-repo-standards/blob/26946e9075503633c16fb1b0f7380d0101ed7b45/docs/dependencies.md)의 호환 Python/HA·extras·marker·라이선스·최소/현재 검증을 따릅니다. bot은 검증한 tree의 요구사항만 PR로 제안하며 extras와 연산자를 보존합니다.
+Python 런타임은 manifest requirements, HA 구성요소는 dependencies/after_dependencies, 테스트·린트 도구는 별도 requirements에 둡니다. 새 의존성 추가는 [공통 의존성 규칙](https://github.com/eigger/hass-repo-standards/blob/v1.0.0/docs/dependencies.md)의 호환 Python/HA·extras·marker·라이선스·최소/현재 검증을 따릅니다. bot은 검증한 tree의 요구사항만 PR로 제안하며 extras와 연산자를 보존합니다.
 
 영문 README.md·한국어 README.ko.md는 짧은 빠른 시작을 유지하고 상세 사용·문제 해결은 docs로 연결합니다. 배지는 관리 블록과 `.hass-standards.json`으로 두 언어를 함께 갱신합니다. ZIP 배포 Custom 통합이므로 Downloads 배지는 모든 GitHub Release 첨부 asset의 다운로드 합계를 표시합니다. HACS 전용 다운로드나 활성 설치 수는 아닙니다.
 
