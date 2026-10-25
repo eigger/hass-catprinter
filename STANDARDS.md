@@ -2,8 +2,10 @@
 
 현재 적용 기준은 2026-10-25 CI 및 카테고리 호환성 후속 기록입니다. 아래 2026-10-17 채택과 ZIP 부분 적용의 PASS·제약은 당시 검증 이력이며 이번 변경의 검증 결과로 재사용하지 않습니다.
 
-- 표준: https://github.com/eigger/hass-repo-standards/tree/4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0
-- 참조 커밋 SHA: `4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0`
+- 표준: https://github.com/eigger/hass-repo-standards/tree/v1.0.0
+- 참조 커밋 SHA: 44349ee5621eea5d80e5c427f7a2435d2c2491bb
+- Standards release: v1.0.0
+- Resolved standards SHA: 44349ee5621eea5d80e5c427f7a2435d2c2491bb
 - 채택 검토일: 2026-10-25 (이전 기록은 아래 보존)
 - profile: integration / ha; domain `catprinter`, 실제 기본 브랜치 `main`
 - 적용 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
@@ -47,8 +49,6 @@
 
 적용 필수 항목은 PASS 또는 근거 있는 N/A이고 현재 예외·필수 TODO는 없습니다. 이 판정은 검증 구현에 대한 것으로 본 마감 문서 자체의 미래 commit/CI를 미리 성공 처리하지 않습니다. 중앙 종료보고는 실제 등록됐고 표의 상태 완료 전환은 문서 게시 이후 수행합니다. 최초 채택은 사용자 직접 push 권한에 따라 main에 반영했으며 가짜 PR·tag·GitHub Release를 만들지 않습니다.
 
-- Reviewed release standards SHA: `4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0`
-
 
 ## 2026-10-23 ZIP release and Downloads update
 
@@ -88,3 +88,6 @@ Hassfest 배포 이미지의 categories 스키마 지연은 중앙 CI-규약의 
 ```
 
 실제 제품 분류와 근거는 `.hass-standards.json.categories_review`에 보존합니다. 중앙 HA-02 규칙의 임시 예외는 이 manifest 경로에만 적용하며 HACS default PR 검증이 해당 필드를 지원하면 위 값을 복원하고 예외를 제거합니다. 이전 upstream Hassfest Core 고정 우회는 제거하고 중앙 기본 Hassfest 검증을 사용합니다. 이 기록이 앞선 categories 유지 및 예외 없음 기록을 대체합니다.
+### 2026-10-25 immutable central release reference migration
+
+- User-requested partial migration: current central caller references use immutable `v1.0.0` resolved to `44349ee5621eea5d80e5c427f7a2435d2c2491bb`. Prior scoped ZIP SHA evidence is retained here: `4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0`. Runtime code, dependencies, support minimum, manifest and integration version are unchanged.

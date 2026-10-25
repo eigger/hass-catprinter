@@ -258,3 +258,10 @@ python -m pip check
 - 사용자 요청에 따라 manifest categories를 임시 제거했습니다. JSON 주석 대신 복원 값과 명시적 사용자 지시 근거를 STANDARDS.md의 Temporary categories compatibility에 보존했습니다. HA-02 예외는 해당 manifest 경로에만 적용합니다.
 - categories 대응을 위한 hassfest-core-ref를 제거하여 기본 공식 Hassfest를 사용합니다. 이전 categories 유지 기록은 당시 판단이며 이번 사용자 지시가 이를 대체합니다.
 - 로컬 검증: 새 중앙 커밋의 scripts/check_integration.py 전체 PASS (예정된 HA-02 예외 1건), 변경 JSON 3개 파싱 PASS, git diff --check PASS. 런타임 코드는 변경하지 않았으며 이번 로컬 확인에서 HA 테스트 전체를 재실행하지 않았습니다. 원격 CI 결과는 별도 확인합니다.
+
+## 2026-10-25 central v1.0.0 partial reference migration
+
+- User request: migrate current central workflow/action references and standards metadata to immutable release `v1.0.0` (`44349ee5621eea5d80e5c427f7a2435d2c2491bb`) from base `24ac52cf77733ae6c1e5e868e7b17f158316cb9d`.
+- Scope: central `uses`, reusable-workflow `standards-ref`, `.hass-standards.json`, and the current STANDARDS header only. Historical refs (4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0, 4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0) remain as evidence; runtime code, dependencies, support minimum, manifest, integration version and tests are unchanged.
+- Verification: Python 3.14 central checker before/after, published immutable release attestation, focused reference/ZIP checks, actionlint and diff check. PR CI and merge remain pending.
+- Review: generated reference change self-review under GOV-05; no device or HA runtime test is claimed for this refs-only PR.

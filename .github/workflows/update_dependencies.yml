@@ -10,7 +10,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0
+    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@v1.0.0
     with:
       domain: catprinter
       packages: '["imagespec", "blesession"]'
@@ -20,4 +20,4 @@ jobs:
       validation-command: python -m ruff check . && python -m ruff format --check
         . && python -m pytest tests/components/catprinter/ --ignore=tests/components/catprinter/test_payload_examples.py
         -v
-      standards-ref: 4ccbffa9af618b14d1a32a9939cbf1fcee6cb7a0
+      standards-ref: 44349ee5621eea5d80e5c427f7a2435d2c2491bb
