@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   current:
-    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.0.1
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.1
     with:
       domain: catprinter
       python-versions: '["3.14"]'
@@ -23,9 +23,8 @@ jobs:
       ha-components: bluetooth recorder image sensor binary_sensor
       dependency-modes: '["current", "minimum"]'
       minimum-packages: '["imagespec", "blesession"]'
-      standards-ref: c9b4553184f9c27bdbe7bf8564eaf10153e9575b
   minimum-ha:
-    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.0.1
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.1
     with:
       domain: catprinter
       python-versions: '["3.13"]'
@@ -36,4 +35,3 @@ jobs:
       ha-components: bluetooth recorder image sensor binary_sensor
       dependency-modes: '["current", "minimum"]'
       minimum-packages: '["imagespec", "blesession"]'
-      standards-ref: c9b4553184f9c27bdbe7bf8564eaf10153e9575b
