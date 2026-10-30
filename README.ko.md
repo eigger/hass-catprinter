@@ -12,7 +12,7 @@ Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Blue
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-catprinter/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-catprinter/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-catprinter?style=flat)](LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/eigger/hass-catprinter/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-catprinter/releases)
+[![Downloads](https://img.shields.io/github/downloads/eigger/hass-catprinter/latest/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-catprinter/releases)
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
@@ -67,7 +67,7 @@ data:
 | 프레임·CRC·모델 프로파일 | [프로토콜 원문 (영어)](docs/protocol.md) | [Protocol](docs/protocol.md) |
 | 기준·검증 증거 | [적용 규칙](STANDARDS.md) | [Adoption checklist (Korean)](ADOPTION_CHECKLIST.md) |
 
-Downloads 배지는 HACS가 사용하는 통합 ZIP을 포함한 모든 GitHub Release 첨부 파일의 다운로드 합계이며 활성 설치 수나 고유 사용자 수가 아닙니다. 이전 Usage 배지는 HA Analytics 참여 설치만 집계했으며 미집계나 조회 실패는 0 설치를 뜻하지 않았습니다.
+Downloads 배지는 HACS가 사용하는 통합 ZIP을 포함한 현재 GitHub Release 첨부 파일의 다운로드 합계이며 활성 설치 수나 고유 사용자 수가 아닙니다. 이전 Usage 배지는 HA Analytics 참여 설치만 집계했으며 미집계나 조회 실패는 0 설치를 뜻하지 않았습니다.
 
 버그는 [Issues](https://github.com/eigger/hass-catprinter/issues)에 문제 해결 문서의 비식별 증거와 함께 제보하고, 질문·제안은 [Discussions](https://github.com/eigger/hass-catprinter/discussions)를 이용하세요.
 

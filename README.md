@@ -12,7 +12,7 @@ A HACS custom integration that prints text, QR codes and images on inexpensive B
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-catprinter/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-catprinter/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-catprinter?style=flat)](LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/eigger/hass-catprinter/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-catprinter/releases)
+[![Downloads](https://img.shields.io/github/downloads/eigger/hass-catprinter/latest/total?style=flat&color=41BDF5&label=Downloads)](https://github.com/eigger/hass-catprinter/releases)
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
@@ -67,7 +67,7 @@ Model names are case-sensitive (`X6h` differs from `X6H`). A discovered advertis
 | Frame format, CRC and model profiles | [Protocol](docs/protocol.md) | [프로토콜 원문 (영어)](docs/protocol.md) |
 | Adopted standard and verification evidence | [Standards (Korean)](STANDARDS.md) | [적용 체크리스트](ADOPTION_CHECKLIST.md) |
 
-The Downloads badge counts downloads of all GitHub Release assets, including the integration ZIP used by HACS. It does not count active installations or unique users. The previous Usage badge counted only HA Analytics participants; missing data or a failed request did not mean zero installs.
+The Downloads badge counts downloads of the current GitHub Release assets, including the integration ZIP used by HACS. It does not count active installations or unique users. The previous Usage badge counted only HA Analytics participants; missing data or a failed request did not mean zero installs.
 
 Report bugs in [Issues](https://github.com/eigger/hass-catprinter/issues) with sanitized evidence from the troubleshooting guide. Use [Discussions](https://github.com/eigger/hass-catprinter/discussions) for questions and ideas.
 
