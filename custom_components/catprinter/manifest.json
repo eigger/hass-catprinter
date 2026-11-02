@@ -396,8 +396,8 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/eigger/hass-catprinter/issues",
   "requirements": [
-    "blesession>=0.9.0",
-    "imagespec[datamatrix]>=1.1.0"
+    "blesession>=0.9.1",
+    "imagespec[datamatrix]>=1.1.1"
   ],
   "version": "0.2.1"
 }
