@@ -16,6 +16,8 @@ Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Blue
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
+![Cat Printer](custom_components/catprinter/brand/logo.png)
+
 ## 기능과 최소 요구사항
 
 - `catprinter.print`로 [imagespec](https://github.com/eigger/imagespec) 레이아웃을 인쇄하고 `catprinter.feed`로 용지를 이동합니다. 상태·배터리·마지막 이미지·세션 진단 엔티티를 제공합니다.
