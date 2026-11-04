@@ -16,6 +16,8 @@ A HACS custom integration that prints text, QR codes and images on inexpensive B
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
+![Cat Printer](custom_components/catprinter/brand/logo.png)
+
 ## Features and requirements
 
 - `catprinter.print` renders [imagespec](https://github.com/eigger/imagespec) layouts; `catprinter.feed` advances paper. Status, battery, last image and session diagnostics are exposed as entities.

@@ -44,7 +44,9 @@ def test_brand_directory_exists():
 
 def test_only_recognised_filenames():
     """Home Assistant ignores anything it does not know by name."""
-    unexpected = {p.name for p in BRAND_DIR.iterdir() if p.is_file()} - ALLOWED
+    unexpected = (
+        {p.name for p in BRAND_DIR.iterdir() if p.is_file()} - ALLOWED - {"README.md"}
+    )
     assert not unexpected, f"unrecognised brand files: {sorted(unexpected)}"
 
 
