@@ -1,7 +1,7 @@
 <!-- hass-standards:header:start -->
-# hass-catprinter
+# Cat Printer for Home Assistant
 
-A HACS custom integration that prints text, QR codes and images on inexpensive Bluetooth thermal “cat” printers using Home Assistant's Bluetooth stack and ESPHome proxies.
+A Home Assistant custom integration that prints text, QR codes and images on Bluetooth thermal cat printers using Home Assistant Bluetooth and ESPHome proxies.
 
 **English** | [한국어](README.ko.md)
 
@@ -18,11 +18,16 @@ A HACS custom integration that prints text, QR codes and images on inexpensive B
 
 ![Cat Printer](custom_components/catprinter/brand/logo.png)
 
-## Features and requirements
+## Features
 
 - `catprinter.print` renders [imagespec](https://github.com/eigger/imagespec) layouts; `catprinter.feed` advances paper. Status, battery, last image and session diagnostics are exposed as entities.
 - Existing hardware confirmation: **X6h, firmware 3.0.5D**, with a local adapter and ESPHome proxy. Other protocol profiles are **untested**; see [models and limitations](docs/user-guide.md#supported-models).
-- Home Assistant **2025.2.0+**, a supported BLE printer and a working HA Bluetooth adapter or proxy. A proxy needs GATT connections enabled. Keep the printer awake and disconnect other apps before printing.
+
+## Requirements
+
+- **Home Assistant:** 2025.2.0 or later.
+- **Bluetooth:** A working Home Assistant Bluetooth adapter or proxy with GATT connections enabled.
+- **Device:** A [supported BLE printer](docs/user-guide.md#supported-models).
 
 ## Installation
 
@@ -30,11 +35,16 @@ A HACS custom integration that prints text, QR codes and images on inexpensive B
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-catprinter&category=integration)
 <!-- hass-standards:installation:end -->
 
-1. Add `https://github.com/eigger/hass-catprinter` to **HACS → Custom repositories → Integration**, or copy `custom_components/catprinter` into your HA configuration's `custom_components/` directory.
-2. Restart Home Assistant.
-3. Open **Settings → Devices & services** and confirm the discovered printer, or choose **Add integration → Cat Printer**. If no supported printer is discovered, enter its address and model manually.
+1. Click the badge above to open the repository in Marketplace.
+2. If you need to add it yourself, go to **Settings → Marketplace → Add from link** and enter <https://github.com/eigger/hass-catprinter>. Connect GitHub if prompted.
+3. Select **Install**. Restart Home Assistant if prompted, then continue to [Configuration](#configuration).
 
-Prepare your proxy using [Bluetooth proxy setup](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md), including XIAO W5500 V1.2 and the USB-A dongle-form M5Stack AtomS3U. This is general guidance, not a claim that each board was tested with this printer.
+## Configuration
+
+1. Wake the printer, load paper and close the cover. Disconnect phone and vendor apps.
+2. Open **Settings → Devices & services** and confirm the discovered printer, or choose **Add integration → Cat Printer**. If discovery fails, enter the printer address and model.
+
+For remote Bluetooth, see the [proxy setup guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md) for boards such as the XIAO W5500 V1.2 and the USB-A M5Stack AtomS3U. These are general recommendations. See the Features section for the existing printer verification.
 
 ## Quick start
 
@@ -54,9 +64,11 @@ data:
   height: 80
 ```
 
-## Important limits
+## Important limitations
 
-Model names are case-sensitive (`X6h` differs from `X6H`). A discovered advertisement does not prove GATT printing works. Models requiring a vendor `D1` secret, incompatible flow control, A4 and Wi-Fi printers are unsupported; Bluetooth Classic SPP is not used. Close phone/vendor app connections; load paper and close the cover. This adoption does not include new physical-printer or HA frontend checks.
+- Model names are case-sensitive (`X6h` and `X6H` are different). A discovered advertisement alone cannot establish whether GATT printing works.
+- Models requiring a vendor `D1` secret or incompatible flow control, A4 and Wi-Fi printers, and Bluetooth Classic SPP are unsupported.
+- Existing hardware verification is listed above. The standards adoption did not include new physical-printer or Home Assistant frontend tests.
 
 ## Documentation
 
@@ -69,9 +81,7 @@ Model names are case-sensitive (`X6h` differs from `X6H`). A discovered advertis
 | Frame format, CRC and model profiles | [Protocol](docs/protocol.md) | [프로토콜 원문 (영어)](docs/protocol.md) |
 | Adopted standard and verification evidence | [Standards (Korean)](STANDARDS.md) | [적용 체크리스트](ADOPTION_CHECKLIST.md) |
 
-The Downloads badge counts downloads of the current GitHub Release assets, including the integration ZIP used by HACS. It does not count active installations or unique users. The previous Usage badge counted only HA Analytics participants; missing data or a failed request did not mean zero installs.
-
-Report bugs in [Issues](https://github.com/eigger/hass-catprinter/issues) with sanitized evidence from the troubleshooting guide. Use [Discussions](https://github.com/eigger/hass-catprinter/discussions) for questions and ideas.
+Include sanitized diagnostics from the troubleshooting guide when reporting a bug.
 
 <!-- hass-standards:support:start -->
 ## Support
