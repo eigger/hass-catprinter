@@ -1,10 +1,10 @@
 """Generate Home Assistant brand images for Cat Printer.
 
 The artwork is an original geometric brand mark on a dark navy rounded square:
-a cat-eared pocket thermal printer with a printed receipt strip and golden
-wireless signal arcs. Drawn from geometric primitives at 4x scale and
-downsampled, so no source image, external font file, or network access is
-needed. Run with Pillow 12.3.0 for reproducible PNGs.
+a centered cat-eared pocket thermal printer with a printed receipt strip bearing
+a crisp Bluetooth rune symbol and thick print lines. Drawn from geometric
+primitives at 4x scale and downsampled, so no source image, external font file,
+or network access is needed. Run with Pillow 12.3.0 for reproducible PNGs.
 """
 
 from __future__ import annotations
@@ -22,7 +22,6 @@ CYAN = "#38bdf8"
 WHITE = "#ffffff"
 YELLOW = "#ffd23f"
 GOLD = "#f2a900"
-ORANGE = "#ff8c1a"
 CORAL = "#ff6b8b"
 WORDMARK = "#0ea5e9"
 
@@ -82,35 +81,73 @@ def _rounded_polygon(
     return poly_pts
 
 
-def _draw_arc_ring(
-    d: ImageDraw.ImageDraw,
+def _draw_thick_polyline(
+    draw: ImageDraw.ImageDraw,
+    pts: list[tuple[float, float]],
+    width: float,
+    color: str,
+) -> None:
+    """Draw a thick polyline with perfectly round caps and joins."""
+    r = width / 2.0
+    for x, y in pts:
+        draw.ellipse([x - r, y - r, x + r, y + r], fill=color)
+    for (x1, y1), (x2, y2) in zip(pts, pts[1:], strict=False):
+        dx = x2 - x1
+        dy = y2 - y1
+        length = math.hypot(dx, dy)
+        if length == 0:
+            continue
+        nx = -dy / length * r
+        ny = dx / length * r
+        draw.polygon(
+            [
+                (x1 + nx, y1 + ny),
+                (x2 + nx, y2 + ny),
+                (x2 - nx, y2 - ny),
+                (x1 - nx, y1 - ny),
+            ],
+            fill=color,
+        )
+
+
+def _draw_bluetooth_rune(
+    draw: ImageDraw.ImageDraw,
     cx: float,
     cy: float,
-    r_in: float,
-    r_out: float,
-    deg_start: float,
-    deg_end: float,
-    fill: str,
+    half_h: float,
+    w_right: float,
+    w_left: float,
+    stroke: float,
+    color: str,
+    s: int,
 ) -> None:
-    """Draw a smooth annular sector."""
-    steps = 48
-    a0 = math.radians(deg_start)
-    a1 = math.radians(deg_end)
-    pts_out = [
-        (
-            cx + r_out * math.cos(a0 + (a1 - a0) * i / steps),
-            cy + r_out * math.sin(a0 + (a1 - a0) * i / steps),
-        )
-        for i in range(steps + 1)
-    ]
-    pts_in = [
-        (
-            cx + r_in * math.cos(a0 + (a1 - a0) * i / steps),
-            cy + r_in * math.sin(a0 + (a1 - a0) * i / steps),
-        )
-        for i in range(steps + 1)
-    ]
-    d.polygon(pts_out + list(reversed(pts_in)), fill=fill)
+    """Draw a clean geometric Bluetooth rune centered at (cx, cy)."""
+    _draw_thick_polyline(
+        draw,
+        [(cx * s, (cy - half_h) * s), (cx * s, (cy + half_h) * s)],
+        stroke * s,
+        color,
+    )
+    _draw_thick_polyline(
+        draw,
+        [
+            (cx * s, (cy - half_h) * s),
+            ((cx + w_right) * s, (cy - half_h * 0.5) * s),
+            ((cx - w_left) * s, (cy + half_h * 0.5) * s),
+        ],
+        stroke * s,
+        color,
+    )
+    _draw_thick_polyline(
+        draw,
+        [
+            (cx * s, (cy + half_h) * s),
+            ((cx + w_right) * s, (cy + half_h * 0.5) * s),
+            ((cx - w_left) * s, (cy - half_h * 0.5) * s),
+        ],
+        stroke * s,
+        color,
+    )
 
 
 def draw_icon() -> Image.Image:
@@ -125,58 +162,60 @@ def draw_icon() -> Image.Image:
     # 1. Dark navy rounded square background.
     d.rounded_rectangle(box(0, 0, SIZE - 1, SIZE - 1), radius=104 * s, fill=NAVY)
 
-    # 2. Geometric cat ears (cyan outer shell + gold inner ear triangles).
-    left_ear = [(98 * s, 210 * s), (116 * s, 68 * s), (226 * s, 146 * s)]
-    right_ear = [(394 * s, 210 * s), (376 * s, 68 * s), (266 * s, 146 * s)]
+    # 2. Centered geometric cat ears (cyan outer shell + gold inner ear triangles).
+    left_ear = [(108 * s, 210 * s), (126 * s, 68 * s), (236 * s, 146 * s)]
+    right_ear = [(404 * s, 210 * s), (386 * s, 68 * s), (276 * s, 146 * s)]
     d.polygon(_rounded_polygon(left_ear, [8 * s, 14 * s, 8 * s]), fill=CYAN)
     d.polygon(_rounded_polygon(right_ear, [8 * s, 14 * s, 8 * s]), fill=CYAN)
 
-    left_inner = [(122 * s, 182 * s), (132 * s, 104 * s), (196 * s, 150 * s)]
-    right_inner = [(370 * s, 182 * s), (360 * s, 104 * s), (296 * s, 150 * s)]
+    left_inner = [(132 * s, 182 * s), (142 * s, 104 * s), (206 * s, 150 * s)]
+    right_inner = [(380 * s, 182 * s), (370 * s, 104 * s), (306 * s, 150 * s)]
     d.polygon(_rounded_polygon(left_inner, 6 * s), fill=YELLOW)
     d.polygon(_rounded_polygon(right_inner, 6 * s), fill=YELLOW)
 
-    # 3. Pocket printer outer shell (cyan) and inner faceplate (white).
-    d.rounded_rectangle(box(76, 134, 416, 378), radius=76 * s, fill=CYAN)
-    d.rounded_rectangle(box(98, 156, 394, 356), radius=58 * s, fill=WHITE)
+    # 3. Centered pocket printer outer shell (cyan) and inner faceplate (white).
+    d.rounded_rectangle(box(86, 134, 426, 378), radius=76 * s, fill=CYAN)
+    d.rounded_rectangle(box(108, 156, 404, 356), radius=58 * s, fill=WHITE)
 
     # 4. Cat face details on the printer faceplate (heterochromia eyes + nose).
     # Left eye (cyan ring + navy pupil + white highlight)
-    d.ellipse(box(144, 198, 210, 264), fill=NAVY)
-    d.ellipse(box(152, 206, 202, 256), fill=CYAN)
-    d.ellipse(box(163, 217, 191, 245), fill=NAVY)
-    d.ellipse(box(159, 213, 173, 227), fill=WHITE)
+    d.ellipse(box(154, 198, 220, 264), fill=NAVY)
+    d.ellipse(box(162, 206, 212, 256), fill=CYAN)
+    d.ellipse(box(173, 217, 201, 245), fill=NAVY)
+    d.ellipse(box(169, 213, 183, 227), fill=WHITE)
 
     # Right eye (gold ring + navy pupil + white highlight)
-    d.ellipse(box(282, 198, 348, 264), fill=NAVY)
-    d.ellipse(box(290, 206, 340, 256), fill=GOLD)
-    d.ellipse(box(301, 217, 329, 245), fill=NAVY)
-    d.ellipse(box(297, 213, 311, 227), fill=WHITE)
+    d.ellipse(box(292, 198, 358, 264), fill=NAVY)
+    d.ellipse(box(300, 206, 350, 256), fill=GOLD)
+    d.ellipse(box(311, 217, 339, 245), fill=NAVY)
+    d.ellipse(box(307, 213, 321, 227), fill=WHITE)
 
-    # Cute geometric cat nose & whiskers/mouth
-    nose_pts = [(228 * s, 252 * s), (264 * s, 252 * s), (246 * s, 274 * s)]
+    # Cute geometric cat nose
+    nose_pts = [(238 * s, 252 * s), (274 * s, 252 * s), (256 * s, 274 * s)]
     d.polygon(_rounded_polygon(nose_pts, 5 * s), fill=CORAL)
 
     # 5. Thermal paper exit slot & printed receipt strip emerging downward.
-    d.rounded_rectangle(box(134, 304, 358, 332), radius=14 * s, fill=NAVY)
+    d.rounded_rectangle(box(144, 304, 368, 332), radius=14 * s, fill=NAVY)
 
     # Paper strip with navy knockout border so it stands cleanly over the shell.
-    d.rounded_rectangle(box(150, 312, 342, 456), radius=18 * s, fill=NAVY)
-    d.rounded_rectangle(box(164, 320, 328, 442), radius=10 * s, fill=WHITE)
+    d.rounded_rectangle(box(156, 312, 356, 458), radius=18 * s, fill=NAVY)
+    d.rounded_rectangle(box(170, 320, 342, 444), radius=10 * s, fill=WHITE)
 
-    # Printed lines on the thermal receipt.
-    d.rounded_rectangle(box(186, 344, 272, 360), radius=6 * s, fill=NAVY)
-    d.rounded_rectangle(box(282, 344, 306, 360), radius=6 * s, fill=GOLD)
-    d.rounded_rectangle(box(186, 374, 306, 390), radius=6 * s, fill=NAVY)
-    d.rounded_rectangle(box(186, 404, 256, 420), radius=6 * s, fill=CYAN)
-
-    # 6. Two golden BLE signal arcs at the upper right.
-    acx, acy = 402 * s, 114 * s
-    for r_in, r_out, col in (
-        (28 * s, 42 * s, YELLOW),
-        (54 * s, 68 * s, GOLD),
-    ):
-        _draw_arc_ring(d, acx, acy, r_in, r_out, -68, 16, fill=col)
+    # 6. Crisp Bluetooth rune + printed lines on the thermal receipt.
+    _draw_bluetooth_rune(
+        d,
+        cx=206.0,
+        cy=382.0,
+        half_h=34.0,
+        w_right=22.0,
+        w_left=20.0,
+        stroke=9.0,
+        color=NAVY,
+        s=s,
+    )
+    d.rounded_rectangle(box(246, 348, 320, 368), radius=8 * s, fill=GOLD)
+    d.rounded_rectangle(box(246, 378, 320, 396), radius=8 * s, fill=NAVY)
+    d.rounded_rectangle(box(246, 406, 300, 424), radius=8 * s, fill=CYAN)
 
     return image.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
 
