@@ -272,3 +272,9 @@ python -m pip check
 - 독립 리뷰 `ci_unify_review`: 수정하지 않은 별도 복사본에서 이전 job/YAML 동등성·중앙 템플릿 일치·보존 범위를 확인했습니다. `check_integration.py` (Python 3.14.5 / PyYAML 6.0.3 / packaging 26.3), actionlint 1.7.12 전체 workflow, `git diff --check` 통과. 기존 HA-02 예외는 별개로 유지됩니다.
 - 초기 Python 3.9 검사/도구 부재를 완료 근거로 사용하지 않았고 위 독립 환경에서 재검증했습니다. branch protection 조회는 HTTP 401로 required checks 확인 불가입니다.
 - 사용자 요청으로 이 변경을 별도 PR로 게시합니다. PR의 원격 CI는 로컬 검사와 별도로 확인하며 수동 dispatch·HA/기기 재검증은 수행하지 않았습니다. 이번 검사 결과를 전체 재채택 완료로 사용하지 않습니다.
+
+## 2026-11-05 README 형식 부분 변경
+
+- 시작 `e230605575d362720002c601239b6a3c537d23f6` (`main`), 중앙 작성 기준 [PR #49](https://github.com/eigger/hass-repo-standards/pull/49) 및 [PR #50](https://github.com/eigger/hass-repo-standards/pull/50). 중앙 release `v1.1.5`, 최소 HA 2025.2.0과 기존 HA-02 예외는 유지합니다.
+- 양언어 제목·소개·기능·요구사항 및 마켓플레이스/HACS 설치를 정리하고 실물 확인 범위, 미검증 상태, 이전 기기별 제한·설정·예제·프록시·수동 설치와 지원 경로를 보존합니다. 2026-11-05 [HACS 기본 목록](https://github.com/hacs/default/blob/master/integration)에 저장소가 없어 사용자 지정 저장소 안내를 유지합니다.
+- 자체 검토 및 Windows Python 3.14.6의 LF 정규화 snapshot에서 `v1.1.5` `check_integration.py` 종료 0. 기존 `catprinter-categories-pending-hacs` HA-02 예외가 출력되며 PASS가 아닙니다. 실제 UI·기기 검증은 미실행이고 원격 CI는 PR 결과를 따릅니다.

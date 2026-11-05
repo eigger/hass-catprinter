@@ -1,7 +1,7 @@
 <!-- hass-standards:header:start -->
-# hass-catprinter
+# Cat Printer for Home Assistant
 
-Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Bluetooth 감열식 “고양이 프린터”에 글자·QR 코드·이미지를 인쇄하는 HACS 커스텀 통합입니다.
+Home Assistant Bluetooth와 ESPHome 프록시를 통해 Bluetooth 감열식 고양이 프린터에 글자·QR 코드·이미지를 인쇄하는 커스텀 통합입니다.
 
 [English](README.md) | **한국어**
 
@@ -18,10 +18,13 @@ Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Blue
 
 ![Cat Printer](custom_components/catprinter/brand/logo.png)
 
-## 기능과 최소 요구사항
+## 주요 기능
 
 - `catprinter.print`로 [imagespec](https://github.com/eigger/imagespec) 레이아웃을 인쇄하고 `catprinter.feed`로 용지를 이동합니다. 상태·배터리·마지막 이미지·세션 진단 엔티티를 제공합니다.
 - 기존 실물 확인: **X6h, 펌웨어 3.0.5D**, 로컬 어댑터·ESPHome 프록시. 나머지 프로토콜 모델은 **미검증**이며 [지원 모델과 제한](docs/ko/user-guide.md#지원-모델)을 확인하세요.
+
+## 요구사항
+
 - Home Assistant **2025.2.0 이상**, 지원 BLE 프린터, 정상 동작하는 HA Bluetooth 어댑터나 프록시가 필요합니다. 프록시는 GATT 연결을 지원해야 하며 프린터를 깨우고 다른 앱의 연결을 종료해야 합니다.
 
 ## 설치
@@ -30,9 +33,11 @@ Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Blue
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-catprinter&category=integration)
 <!-- hass-standards:installation:end -->
 
-1. **HACS → 사용자 지정 저장소 → 통합**에 `https://github.com/eigger/hass-catprinter`를 추가하거나 `custom_components/catprinter`를 HA 설정의 `custom_components/` 아래로 복사합니다.
-2. Home Assistant를 재시작합니다.
+1. Home Assistant 2026.11 이상에서는 **설정 → 마켓플레이스**를 열고 `https://github.com/eigger/hass-catprinter`를 사용자 지정 통합 저장소로 추가합니다. 사용자 지정 저장소에는 GitHub 연결이 필요합니다. 이전 지원 버전에서는 HACS **사용자 지정 저장소**에 **통합** 유형으로 추가합니다. 위 버튼은 버전에 맞는 스토어의 저장소 화면을 엽니다.
+2. **Cat Printer**를 다운로드합니다. 안내가 표시되면 Home Assistant를 재시작합니다.
 3. **설정 → 기기 및 서비스**에서 발견한 프린터를 확인하거나 **통합 추가 → Cat Printer**를 선택합니다. 지원 프린터를 찾지 못하면 주소·모델을 수동으로 입력합니다.
+
+수동 설치는 `custom_components/catprinter`를 Home Assistant 설정의 `custom_components/` 아래로 복사한 뒤 Home Assistant를 재시작합니다.
 
 [Bluetooth 프록시 설정](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)에서 XIAO W5500 V1.2와 USB-A 동글 형태의 M5Stack AtomS3U 준비 방법을 확인하세요. 공통 추천은 모든 보드를 이 프린터와 실물 검증했다는 뜻은 아닙니다.
 
@@ -54,7 +59,7 @@ data:
   height: 80
 ```
 
-## 중요한 제한
+## 중요 제한사항
 
 모델명은 대소문자를 구분합니다(`X6h`와 `X6H`는 다름). 광고 발견만으로 GATT 인쇄가 되는 것은 아닙니다. 제조사 `D1` 비밀키·다른 흐름 제어가 필요한 모델, A4·Wi-Fi 프린터는 지원하지 않으며 Bluetooth Classic SPP를 사용하지 않습니다. 휴대전화·제조사 앱 연결을 종료하고 용지를 넣은 뒤 커버를 닫으세요. 이번 공통화에서 실물 프린터·HA 프런트엔드 검증을 새로 수행하지는 않았습니다.
 

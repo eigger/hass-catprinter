@@ -20,10 +20,10 @@
     "README.ko.md": "#설치"
   },
   "readme": {
-    "title": "hass-catprinter",
+    "title": "Cat Printer for Home Assistant",
     "descriptions": {
-      "en": "A HACS custom integration that prints text, QR codes and images on inexpensive Bluetooth thermal “cat” printers using Home Assistant's Bluetooth stack and ESPHome proxies.",
-      "ko": "Home Assistant의 Bluetooth 스택과 ESPHome 프록시를 통해 저렴한 Bluetooth 감열식 “고양이 프린터”에 글자·QR 코드·이미지를 인쇄하는 HACS 커스텀 통합입니다."
+      "en": "A Home Assistant custom integration that prints text, QR codes and images on Bluetooth thermal cat printers using Home Assistant Bluetooth and ESPHome proxies.",
+      "ko": "Home Assistant Bluetooth와 ESPHome 프록시를 통해 Bluetooth 감열식 고양이 프린터에 글자·QR 코드·이미지를 인쇄하는 커스텀 통합입니다."
     },
     "issues": true,
     "discussions": true,
