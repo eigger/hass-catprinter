@@ -8,7 +8,7 @@ Home Assistant Bluetooth와 ESPHome 프록시를 통해 Bluetooth 감열식 고�
 <!-- hass-standards:badges:start -->
 [![Release](https://img.shields.io/github/v/release/eigger/hass-catprinter?style=flat)](https://github.com/eigger/hass-catprinter/releases)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat)](#설치)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.2.0-41BDF5?style=flat)](hacs.json)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat)](hacs.json)
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-catprinter/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-catprinter/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-catprinter?style=flat)](LICENSE)
@@ -25,7 +25,7 @@ Home Assistant Bluetooth와 ESPHome 프록시를 통해 Bluetooth 감열식 고�
 
 ## 요구사항
 
-- **Home Assistant:** 2025.2.0 이상.
+- **Home Assistant:** 2025.12.0 이상.
 - **Bluetooth:** 정상 동작하는 Home Assistant Bluetooth 어댑터 또는 GATT 연결이 활성화된 프록시.
 - **기기:** [지원 BLE 프린터](docs/ko/user-guide.md#지원-모델).
 
