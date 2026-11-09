@@ -8,7 +8,7 @@ A Home Assistant custom integration that prints text, QR codes and images on Blu
 <!-- hass-standards:badges:start -->
 [![Release](https://img.shields.io/github/v/release/eigger/hass-catprinter?style=flat)](https://github.com/eigger/hass-catprinter/releases)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat)](#installation)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.2.0-41BDF5?style=flat)](hacs.json)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat)](hacs.json)
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-catprinter/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-catprinter/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-catprinter/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-catprinter?style=flat)](LICENSE)
@@ -20,12 +20,12 @@ A Home Assistant custom integration that prints text, QR codes and images on Blu
 
 ## Features
 
-- `catprinter.print` renders [imagespec](https://github.com/eigger/imagespec) layouts; `catprinter.feed` advances paper. Status, battery, last image and session diagnostics are exposed as entities.
+- `catprinter.print` (admin only, since `dlimg` can read local files) renders [imagespec](https://github.com/eigger/imagespec) layouts; `catprinter.feed` advances paper. Status, battery, last image and session diagnostics are exposed as entities.
 - Existing hardware confirmation: **X6h, firmware 3.0.5D**, with a local adapter and ESPHome proxy. Other protocol profiles are **untested**; see [models and limitations](docs/user-guide.md#supported-models).
 
 ## Requirements
 
-- **Home Assistant:** 2025.2.0 or later.
+- **Home Assistant:** 2025.12.0 or later.
 - **Bluetooth:** A working Home Assistant Bluetooth adapter or proxy with GATT connections enabled.
 - **Device:** A [supported BLE printer](docs/user-guide.md#supported-models).
 

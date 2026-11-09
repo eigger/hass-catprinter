@@ -21,6 +21,8 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.service import async_register_admin_service
+from PIL import Image as PILImage
 
 from .catprinter_ble import CatPrinterDevice
 from .const import DOMAIN, EXPECTED_ERRORS
@@ -56,7 +58,11 @@ def async_setup_services(hass: HomeAssistant) -> None:
         for entry in _resolve_target_entries(hass, service):
             await _feed_on_entry(hass, entry, int(service.data.get("dots", 96)))
 
-    hass.services.async_register(
+    # Admin only: the payload can make dlimg read local image files and fetch
+    # URLs, and the result is returned in the response and the last-image
+    # entity. Automations run without a user context and are unaffected.
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_PRINT,
         print_service,
@@ -81,6 +87,16 @@ def _ble_device_for(hass: HomeAssistant, device: CatPrinterDevice):
     return ble_device
 
 
+def _render_png(
+    entry_id: str, service: ServiceCall, hass: HomeAssistant, width: int
+) -> tuple[PILImage.Image, bytes]:
+    """Render the payload and encode it as PNG (blocking, run in the executor)."""
+    image = render_image(entry_id, service, hass, width)
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return image, buffer.getvalue()
+
+
 async def _print_on_entry(
     hass: HomeAssistant, entry: CatPrinterConfigEntry, service: ServiceCall
 ) -> dict:
@@ -91,15 +107,12 @@ async def _print_on_entry(
     device = runtime.device
 
     try:
-        image = await hass.async_add_executor_job(
-            render_image, entry.entry_id, service, hass, device.ble_data.printhead_px
+        image, png = await hass.async_add_executor_job(
+            _render_png, entry.entry_id, service, hass, device.ble_data.printhead_px
         )
     except Exception as err:
         raise ServiceValidationError(f"Failed to create image: {err}") from err
 
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    png = buffer.getvalue()
     runtime.image_coordinator.async_set_updated_data(
         (Image(content_type="image/png", content=png), coordinator.data)
     )

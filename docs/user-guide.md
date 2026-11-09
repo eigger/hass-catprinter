@@ -94,6 +94,8 @@ delay, smaller is faster), `copies`, `rotate`, `preview`. Canvas width is
 always the print head width (384 px on 2" models); only `height` is yours.
 The response contains the rendered PNG as a data URL plus the energy/speed used.
 
+> **Admin only:** `catprinter.print` (including `preview`) can only be called by an administrator user, because `dlimg` can read local files and fetch URLs. Automations are unaffected; scripts work when started by an admin or an automation, but not when a non-admin user runs them directly. `catprinter.feed` has no such restriction.
+
 #### Printing an image from a URL (`dlimg`)
 
 To download, process, and print an image directly from the web, use the `dlimg` payload type:

@@ -33,7 +33,7 @@ from PIL import Image
 
 from .client import CatPrinterClient
 from .errors import CatPrinterError, ErrorCode, PrinterError, UnsupportedDeviceError
-from .imaging import fit_to_printhead, to_raster
+from .imaging import Bitmap1bpp, fit_to_printhead, to_raster
 from .models import DEFAULT_DENSITY, DeviceProfile, find_profile_by_name, get_profile
 from .protocol import (
     DeviceState,
@@ -109,6 +109,15 @@ class BLEData:
             "label_sensor": None,
         }
     )
+
+
+def _prepare_job(
+    image: Image.Image, printhead_px: int, params: JobParams
+) -> tuple[Bitmap1bpp, bytes]:
+    """Fit, rasterise and encode ``image`` into a print job (blocking)."""
+    bitmap = to_raster(fit_to_printhead(image, printhead_px))
+    rows = [bitmap.row(i) for i in range(bitmap.height)]
+    return bitmap, build_print_job(rows, bitmap.width, params)
 
 
 class CatPrinterDevice:
@@ -462,8 +471,6 @@ class CatPrinterDevice:
                         "print", SessionTrace(stage_map=STAGE_MAP), err
                     )
                     raise
-                fitted = fit_to_printhead(image, profile.printhead_px)
-                bitmap = to_raster(fitted)
                 params = JobParams(
                     mode=mode,
                     energy=energy
@@ -476,8 +483,11 @@ class CatPrinterDevice:
                     feed_step=profile.feed_step,
                     copies=copies,
                 )
-                rows = [bitmap.row(i) for i in range(bitmap.height)]
-                job = build_print_job(rows, bitmap.width, params)
+                # Rasterising and RLE-encoding loop over every pixel in pure
+                # Python (up to thousands of rows), so keep it off the event loop.
+                bitmap, job = await asyncio.to_thread(
+                    _prepare_job, image, profile.printhead_px, params
+                )
                 _LOGGER.debug(
                     "Print %dx%d mode=%s energy=%s speed=%d feed=%d copies=%d -> %d bytes",
                     bitmap.width,
