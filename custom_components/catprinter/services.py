@@ -17,11 +17,15 @@ from homeassistant.core import (
     SupportsResponse,
     callback,
 )
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.exceptions import (
+    HomeAssistantError,
+    ServiceValidationError,
+    Unauthorized,
+    UnknownUser,
+)
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.service import async_register_admin_service
 from PIL import Image as PILImage
 
 from .catprinter_ble import CatPrinterDevice
@@ -59,13 +63,27 @@ def async_setup_services(hass: HomeAssistant) -> None:
             await _feed_on_entry(hass, entry, int(service.data.get("dots", 96)))
 
     # Admin only: the payload can make dlimg read local image files and fetch
-    # URLs, and the result is returned in the response and the last-image
-    # entity. Automations run without a user context and are unaffected.
-    async_register_admin_service(
-        hass,
+    # URLs, and the result is returned in the response and last-image entity.
+    # Automations run without a user context and are unaffected. This mirrors
+    # ``async_register_admin_service``, which only accepts ``supports_response``
+    # on newer Home Assistant releases than the minimum supported one.
+    async def admin_print_service(service: ServiceCall) -> ServiceResponse:
+        if service.context.user_id:
+            user = await hass.auth.async_get_user(service.context.user_id)
+            if user is None:
+                raise UnknownUser(
+                    context=service.context,
+                    permission="admin",
+                    user_id=service.context.user_id,
+                )
+            if not user.is_admin:
+                raise Unauthorized(context=service.context)
+        return await print_service(service)
+
+    hass.services.async_register(
         DOMAIN,
         SERVICE_PRINT,
-        print_service,
+        admin_print_service,
         schema=PRINT_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
