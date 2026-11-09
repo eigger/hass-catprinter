@@ -73,6 +73,8 @@ data:
 
 `mode`는 `image` 또는 열량을 높여 선명하게 하는 `text`입니다. `density`는 1–7(기본 4), 단계당 약 ±15% 열량입니다. `feed`는 마지막 행 뒤로 밀어낼 도트 수입니다. 원시 `energy`(0–65535), `speed`(행 지연, 작을수록 빠름), `copies`, `rotate`, `preview`도 지정할 수 있습니다. 캔버스 너비는 헤드 너비(2인치 모델은 384px)로 고정하고 `height`만 정합니다. 응답은 렌더링 PNG data URL과 사용한 열량·속도를 포함합니다.
 
+> **관리자 전용:** `dlimg`가 로컬 파일을 읽고 URL을 가져올 수 있으므로 `catprinter.print`(`preview` 포함)는 관리자 사용자만 호출할 수 있습니다. 자동화와 스크립트는 영향이 없습니다. `catprinter.feed`는 제한이 없습니다.
+
 ### URL 이미지 인쇄
 
 ```yaml

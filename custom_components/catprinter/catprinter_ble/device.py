@@ -33,7 +33,7 @@ from PIL import Image
 
 from .client import CatPrinterClient
 from .errors import CatPrinterError, ErrorCode, PrinterError, UnsupportedDeviceError
-from .imaging import fit_to_printhead, to_raster
+from .imaging import Bitmap1bpp, fit_to_printhead, to_raster
 from .models import DEFAULT_DENSITY, DeviceProfile, find_profile_by_name, get_profile
 from .protocol import (
     DeviceState,
@@ -111,7 +111,9 @@ class BLEData:
     )
 
 
-def _prepare_job(image: Image.Image, printhead_px: int, params: JobParams):
+def _prepare_job(
+    image: Image.Image, printhead_px: int, params: JobParams
+) -> tuple[Bitmap1bpp, bytes]:
     """Fit, rasterise and encode ``image`` into a print job (blocking)."""
     bitmap = to_raster(fit_to_printhead(image, printhead_px))
     rows = [bitmap.row(i) for i in range(bitmap.height)]

@@ -2,10 +2,17 @@
 
 import base64
 import io
+import threading
+from unittest.mock import patch
 
 import pytest
 import voluptuous as vol
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.core import Context
+from homeassistant.exceptions import (
+    HomeAssistantError,
+    ServiceValidationError,
+    Unauthorized,
+)
 from homeassistant.setup import async_setup_component
 from PIL import Image
 
@@ -126,9 +133,6 @@ async def test_registered_print_schema_previews_native_list(
 
 async def test_print_requires_admin(hass, loaded_entry, hass_read_only_user):
     """dlimg can read local files, so a non-admin user must not call print."""
-    from homeassistant.core import Context
-    from homeassistant.exceptions import Unauthorized
-
     with pytest.raises(Unauthorized):
         await hass.services.async_call(
             "catprinter",
@@ -137,3 +141,46 @@ async def test_print_requires_admin(hass, loaded_entry, hass_read_only_user):
             blocking=True,
             context=Context(user_id=hass_read_only_user.id),
         )
+
+
+async def test_admin_can_print_and_anyone_can_feed(
+    hass, loaded_entry, transport, hass_admin_user, hass_read_only_user
+):
+    result = await hass.services.async_call(
+        "catprinter",
+        "print",
+        {"preview": True, "height": 8, "payload": []},
+        blocking=True,
+        return_response=True,
+        context=Context(user_id=hass_admin_user.id),
+    )
+    assert result["image"].startswith("data:image/png;base64,")
+    await hass.services.async_call(
+        "catprinter",
+        "feed",
+        {},
+        blocking=True,
+        context=Context(user_id=hass_read_only_user.id),
+    )
+
+
+async def test_job_is_built_off_the_event_loop(hass, loaded_entry, transport):
+    from custom_components.catprinter.catprinter_ble import device as device_mod
+
+    real = device_mod._prepare_job
+    threads = []
+
+    def spy(*args):
+        threads.append(threading.current_thread())
+        return real(*args)
+
+    with patch.object(device_mod, "_prepare_job", spy):
+        await hass.services.async_call(
+            "catprinter",
+            "print",
+            {"height": 8, "payload": []},
+            blocking=True,
+            return_response=True,
+        )
+    assert threads
+    assert threads[0] is not threading.main_thread()

@@ -86,6 +86,14 @@ def _ble_device_for(hass: HomeAssistant, device: CatPrinterDevice):
     return ble_device
 
 
+def _render_png(entry_id: str, service: ServiceCall, hass: HomeAssistant, width: int):
+    """Render the payload and encode it as PNG (blocking, run in the executor)."""
+    image = render_image(entry_id, service, hass, width)
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return image, buffer.getvalue()
+
+
 async def _print_on_entry(
     hass: HomeAssistant, entry: CatPrinterConfigEntry, service: ServiceCall
 ) -> dict:
@@ -96,15 +104,12 @@ async def _print_on_entry(
     device = runtime.device
 
     try:
-        image = await hass.async_add_executor_job(
-            render_image, entry.entry_id, service, hass, device.ble_data.printhead_px
+        image, png = await hass.async_add_executor_job(
+            _render_png, entry.entry_id, service, hass, device.ble_data.printhead_px
         )
     except Exception as err:
         raise ServiceValidationError(f"Failed to create image: {err}") from err
 
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    png = buffer.getvalue()
     runtime.image_coordinator.async_set_updated_data(
         (Image(content_type="image/png", content=png), coordinator.data)
     )
