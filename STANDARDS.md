@@ -14,7 +14,7 @@
 - 중앙 시작 등록: 2026-10-17, `8be14269fa83fbcf5991634882a2de4a5ec52457`; 구현·검증 종료보고 `8d4348ea951736054d08f7cfe9b19f6d44b37a5e` main 등록. 규칙 기준 SHA와 현황 기록 커밋은 별개
 - 테스트 경로: `tests/components/catprinter/`
 - 변경 전 지원 최소: `hacs.json.homeassistant=2025.2.0`; 기존 README는 별도 HA 버전 선언 없음, manifest는 지원 HA 하한 필드 없음
-- 적용 후 지원 최소: **2025.2.0 유지**. 최신 테스트와 지원 하한을 분리하며 임의 상향하지 않음
+- 적용 후 지원 최소: **2025.12.0으로 상향**(`async_register_admin_service(supports_response)` 필요). 최신 테스트와 지원 하한을 분리하며 임의 상향하지 않음
 - current 테스트 목표: Python 3.14 / HA 2026.10.2 / pytest-homeassistant-custom-component 0.13.373
 - 정확한 최소 HA 목표: Python 3.13 / HA 2025.2.0 / 플러그인 0.13.210
 - 정확한 최소 외부 라이브러리: blesession 0.9.0, imagespec[datamatrix] 1.1.0; latest 해결값과 별도 검증
