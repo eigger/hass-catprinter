@@ -399,5 +399,5 @@
     "blesession>=0.9.1",
     "imagespec[datamatrix]>=1.1.1"
   ],
-  "version": "0.2.2"
+  "version": "0.2.3"
 }
