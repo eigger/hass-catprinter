@@ -122,3 +122,18 @@ async def test_registered_print_schema_previews_native_list(
     assert image.size == (384, 32)
     assert image.convert("L").getextrema() == (0, 255)
     assert len(transport.writes) == before
+
+
+async def test_print_requires_admin(hass, loaded_entry, hass_read_only_user):
+    """dlimg can read local files, so a non-admin user must not call print."""
+    from homeassistant.core import Context
+    from homeassistant.exceptions import Unauthorized
+
+    with pytest.raises(Unauthorized):
+        await hass.services.async_call(
+            "catprinter",
+            "print",
+            {"preview": True, "payload": []},
+            blocking=True,
+            context=Context(user_id=hass_read_only_user.id),
+        )

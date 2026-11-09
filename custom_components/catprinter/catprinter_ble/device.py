@@ -111,6 +111,13 @@ class BLEData:
     )
 
 
+def _prepare_job(image: Image.Image, printhead_px: int, params: JobParams):
+    """Fit, rasterise and encode ``image`` into a print job (blocking)."""
+    bitmap = to_raster(fit_to_printhead(image, printhead_px))
+    rows = [bitmap.row(i) for i in range(bitmap.height)]
+    return bitmap, build_print_job(rows, bitmap.width, params)
+
+
 class CatPrinterDevice:
     """Connection owner and print entry point for one printer."""
 
@@ -462,8 +469,6 @@ class CatPrinterDevice:
                         "print", SessionTrace(stage_map=STAGE_MAP), err
                     )
                     raise
-                fitted = fit_to_printhead(image, profile.printhead_px)
-                bitmap = to_raster(fitted)
                 params = JobParams(
                     mode=mode,
                     energy=energy
@@ -476,8 +481,11 @@ class CatPrinterDevice:
                     feed_step=profile.feed_step,
                     copies=copies,
                 )
-                rows = [bitmap.row(i) for i in range(bitmap.height)]
-                job = build_print_job(rows, bitmap.width, params)
+                # Rasterising and RLE-encoding loop over every pixel in pure
+                # Python (up to thousands of rows), so keep it off the event loop.
+                bitmap, job = await asyncio.to_thread(
+                    _prepare_job, image, profile.printhead_px, params
+                )
                 _LOGGER.debug(
                     "Print %dx%d mode=%s energy=%s speed=%d feed=%d copies=%d -> %d bytes",
                     bitmap.width,

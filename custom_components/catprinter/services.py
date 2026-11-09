@@ -21,6 +21,7 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.service import async_register_admin_service
 
 from .catprinter_ble import CatPrinterDevice
 from .const import DOMAIN, EXPECTED_ERRORS
@@ -56,7 +57,11 @@ def async_setup_services(hass: HomeAssistant) -> None:
         for entry in _resolve_target_entries(hass, service):
             await _feed_on_entry(hass, entry, int(service.data.get("dots", 96)))
 
-    hass.services.async_register(
+    # Admin only: the payload can make dlimg read local image files and fetch
+    # URLs, and the result is returned in the response and the last-image
+    # entity. Automations run without a user context and are unaffected.
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_PRINT,
         print_service,
