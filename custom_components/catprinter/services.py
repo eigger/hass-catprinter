@@ -22,6 +22,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.service import async_register_admin_service
+from PIL import Image as PILImage
 
 from .catprinter_ble import CatPrinterDevice
 from .const import DOMAIN, EXPECTED_ERRORS
@@ -86,7 +87,9 @@ def _ble_device_for(hass: HomeAssistant, device: CatPrinterDevice):
     return ble_device
 
 
-def _render_png(entry_id: str, service: ServiceCall, hass: HomeAssistant, width: int):
+def _render_png(
+    entry_id: str, service: ServiceCall, hass: HomeAssistant, width: int
+) -> tuple[PILImage.Image, bytes]:
     """Render the payload and encode it as PNG (blocking, run in the executor)."""
     image = render_image(entry_id, service, hass, width)
     buffer = io.BytesIO()

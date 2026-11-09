@@ -146,6 +146,7 @@ async def test_print_requires_admin(hass, loaded_entry, hass_read_only_user):
 async def test_admin_can_print_and_anyone_can_feed(
     hass, loaded_entry, transport, hass_admin_user, hass_read_only_user
 ):
+    """Admins can print; feed is not restricted to admins."""
     result = await hass.services.async_call(
         "catprinter",
         "print",
@@ -155,6 +156,7 @@ async def test_admin_can_print_and_anyone_can_feed(
         context=Context(user_id=hass_admin_user.id),
     )
     assert result["image"].startswith("data:image/png;base64,")
+    before = len(transport.writes)
     await hass.services.async_call(
         "catprinter",
         "feed",
@@ -162,6 +164,7 @@ async def test_admin_can_print_and_anyone_can_feed(
         blocking=True,
         context=Context(user_id=hass_read_only_user.id),
     )
+    assert len(transport.writes) > before
 
 
 async def test_job_is_built_off_the_event_loop(hass, loaded_entry, transport):
