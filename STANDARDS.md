@@ -2,10 +2,10 @@
 
 현재 적용 기준은 2026-10-25 CI 및 카테고리 호환성 후속 기록입니다. 아래 2026-10-17 채택과 ZIP 부분 적용의 PASS·제약은 당시 검증 이력이며 이번 변경의 검증 결과로 재사용하지 않습니다.
 
-- 표준: https://github.com/eigger/hass-repo-standards/tree/v1.3.0
-- 참조 커밋 SHA: 8a98c61e67051c8f824ecf8c0950b3f9c0e95250
-- Standards release: v1.3.0
-- Resolved standards SHA: 8a98c61e67051c8f824ecf8c0950b3f9c0e95250
+- 표준: https://github.com/eigger/hass-repo-standards/tree/v1.3.1
+- 참조 커밋 SHA: 2f9d752d43b7f0bd3039ff804b4181ed2964cb16
+- Standards release: v1.3.1
+- Resolved standards SHA: 2f9d752d43b7f0bd3039ff804b4181ed2964cb16
 - 채택 검토일: 2026-10-25 (이전 기록은 아래 보존)
 - profile: integration / ha; domain `catprinter`, 실제 기본 브랜치 `main`
 - 적용 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
